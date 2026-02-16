@@ -1,3 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --font-jetbrainsMono: 'JetBrains Mono', monospace;
+
+  /* Light mode — violet creative */
+  --bg:           #f5f3ff;
+  --bg-secondary: #ede9fe;
+  --text:         #1e1b2e;
+  --text-muted:   #5b5478;
+  --border:       #c4b5fd;
+  --accent:       #7c3aed;
+  --accent-hover: #6d28d9;
+}
+
+.dark {
+  /* Dark mode — neon green */
+  --bg:           #1c1c22;
+  --bg-secondary: #27272a;
+  --text:         #ffffff;
+  --text-muted:   rgba(255, 255, 255, 0.6);
+  --border:       rgba(255, 255, 255, 0.1);
+  --accent:       #00ff99;
+  --accent-hover: #00e187;
+}
+
+@layer base {
+  body {
+    @apply font-primary leading-loose;
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 { color: var(--text); }
+  p                        { color: var(--text-muted); }
+  a                        { color: var(--text); transition: color 0.3s ease; }
+  hr                       { border-color: var(--border); }
+
+  .h1 { @apply text-[48px] xl:text-[80px] leading-[1.1] font-semibold; }
+  .h2 { @apply text-[36px] xl:text-[48px] leading-[1.1] font-semibold; }
+  .h3 { @apply text-[20px] xl:text-[24px] leading-[1.1] font-semibold; }
+}
