@@ -13,7 +13,6 @@ const CV_NAME    = "CV-Jimmy.pdf";
 const SOCIALS = [
   { icon: <FaGithub />,   path: "https://github.com/JarudatKMITL" },
   { icon: <FaFacebook />, path: "https://www.facebook.com/profile.php?id=100009567887215" },
-  { icon: <FaYoutube />,  path: "https://www.youtube.com/@jc_dev410" },
   { icon: <FaLine />,     path: "https://line.me/ti/p/gac1BG3G2r" },
 ];
 // ────────────────────────────────────────────────────────────────────────────
@@ -27,7 +26,6 @@ const Home = () => {
     { num: 1,  text: t.home.stats.yearsExperience },
     { num: 2,  text: t.home.stats.projectsCompleted },
     { num: 8,  text: t.home.stats.technologiesMastered },
-    { num: 12, text: t.home.stats.codeCommits },
   ];
 
   const [counts, setCounts] = useState(STATS.map(() => 0));
