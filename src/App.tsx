@@ -11,7 +11,7 @@ const CV_PATH    = "/pdf/CV.pdf";
 const CV_NAME    = "CV-Jimmy.pdf";
 
 const SOCIALS = [
-  { icon: <FaGithub />,   path: "https://github.com/JarudatKMITL" },
+  { icon: <FaGithub />,   path: "https://github.com/JimmyJarudat" },
   { icon: <FaFacebook />, path: "https://www.facebook.com/profile.php?id=100009567887215" },
   { icon: <FaLine />,     path: "https://line.me/ti/p/gac1BG3G2r" },
 ];
