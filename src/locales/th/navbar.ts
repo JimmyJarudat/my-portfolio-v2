@@ -4,5 +4,5 @@ export const th = {
   project: "โปรเจกต์",
   certificate: "ใบรับรอง",
   about: "เกี่ยวกับ",
-  blog: "บล็อก",
+  blog: "บทความ",
 };

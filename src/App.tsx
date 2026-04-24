@@ -5,8 +5,8 @@ import { FiDownload } from "react-icons/fi";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-// ─── ข้อมูล แก้ไขได้ที่นี่เลย ──────────────────────────────────────────────
-const PHOTO_PATH = "/assets/JimPhoto.png";
+// ─── ข้อมูล ──────────────────────────────────────────────
+const PHOTO_PATH = "/images/Hero_Jimmy.png";
 const CV_PATH    = "/pdf/CV.pdf";
 const CV_NAME    = "CV-Jimmy.pdf";
 

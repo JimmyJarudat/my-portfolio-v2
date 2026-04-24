@@ -135,7 +135,7 @@ const Header = () => {
                   ))}
                   
                   {/* Blog Link in Mobile Menu */}
-                  <Link to="/myblog" onClick={() => setOpen(false)}>
+                  <Link to="/tech-notes" onClick={() => setOpen(false)}>
                     <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors mt-4">
                       {t.navbar.blog}
                     </button>

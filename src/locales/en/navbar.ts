@@ -4,5 +4,5 @@ export const en = {
   project: "Project",
   certificate: "Certificate",
   about: "About",
-  blog: "Blog",
+  blog: "Tech Notes",
 };
