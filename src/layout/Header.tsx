@@ -5,13 +5,12 @@ import { MdLightMode, MdDarkMode, MdLanguage } from "react-icons/md";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const NAV_KEYS = ["home", "resume", "project", "certificate", "about"] as const;
+const NAV_KEYS = ["home", "resume", "project", "about"] as const;
 
 const NAV_PATHS = {
   home: "/",
   resume: "/resume",
   project: "/project",
-  certificate: "/certificate",
   about: "/about",
 } as const;
 
@@ -82,7 +81,7 @@ const Header = () => {
           </nav>
 
           {/* Blog Button */}
-          <Link to="/myblog">
+          <Link to="/tech-note">
             <button className="inline-flex items-center justify-center h-[44px] px-6 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors">
               {t.navbar.blog}
             </button>
