@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 const FILTERS = ["ALL", "LIVE", "CLIENT", "INTERNAL", "SAAS"] as const;
@@ -98,73 +99,137 @@ const PROJECTS: Project[] = [
     status: "internal",
   },
   {
-    id: 12, index: "03",
-    title: "Dev Bootstrapper CLI",
-    subtitle: "One-command dev setup",
-    overview: "CLI tool spin up development environment พร้อม docker-compose, env setup และ seed data ด้วยคำสั่งเดียว รองรับหลาย project template",
-    tags: ["INTERNAL"],
-    techStack: ["Go", "Docker", "Shell Script", "YAML"],
-    architecture: "Single binary CLI parse config YAML แล้ว orchestrate containers",
-    infrastructure: "GitHub Actions · GitHub Packages",
-    challenges: "Cross-platform compatibility ระหว่าง macOS Apple Silicon กับ Linux AMD64",
-    githubUrl: "https://github.com", videoUrl: "https://youtube.com",
-    images: [
-      "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=1200&q=85",
-      "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
-    ],
-    year: 2023, status: "internal",
-  },
-  {
-    id: 4, index: "04",
-    title: "Multi-tenant CMS",
-    subtitle: "Agency-grade content management",
-    overview: "CMS สำหรับ agency ดูแลหลาย client บน domain เดียว แยก content, media และ permission ต่อ tenant ด้วย row-level security",
-    tags: ["LIVE", "SAAS", "CLIENT"],
-    techStack: ["Next.js", "Prisma", "PostgreSQL", "S3", "Cloudflare"],
-    architecture: "Row-level security + subdomain routing สำหรับ tenant isolation",
-    infrastructure: "Vercel · Cloudflare R2 · Supabase · GitHub Actions",
-    challenges: "Media CDN serve ไฟล์ถูก tenant ไม่ leak ข้ามกัน ใช้ signed URL + edge middleware",
-    liveUrl: "https://example.com", githubUrl: "https://github.com",
-    images: [
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=85",
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=85",
-      "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=1200&q=85",
-    ],
-    year: 2024, status: "live",
-  },
-  {
-    id: 5, index: "05",
-    title: "CI/CD Pipeline Template",
-    subtitle: "Reusable deployment workflow",
-    overview: "Reusable GitHub Actions workflow สำหรับ Node.js/Docker ครอบคลุม test, build, deploy และ rollback พร้อม Slack notification",
-    tags: ["INTERNAL"],
-    techStack: ["GitHub Actions", "Docker", "Shell", "YAML"],
-    architecture: "Composite actions แยก reusable steps เป็น modules",
-    infrastructure: "GitHub Actions · Docker Hub · Self-hosted Runner",
-    challenges: "Deploy time < 3 นาที ด้วย layer caching + parallel job",
-    githubUrl: "https://github.com", videoUrl: "https://youtube.com",
-    images: [
-      "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
-    ],
-    year: 2023, status: "internal",
-  },
-  {
-    id: 6, index: "06",
-    title: "Realtime Collab Tool",
-    subtitle: "Sprint planning with live sync",
-    overview: "Web app สำหรับ team sprint planning ร่วมกัน รองรับ voting, timer และ sync state แบบ real-time ด้วย WebSocket",
+    id: 4,
+    index: "04",
+    title: "SPC IT Helpdesk",
+    subtitle: "Internal IT job tracking & KPI dashboard",
+    overview: "ระบบบันทึกและติดตามงาน IT ภายในองค์กร รองรับการแจ้งปัญหาจากผู้ใช้งานและการลงบันทึกโดยทีม IT แยกประเภทงานเป็น Hardware, Software, User Support และงานประจำ สามารถค้นหาข้อมูลเจ้าของเบอร์โทรภายใน 3 หลักได้ทันที โดยไม่ต้องกรอกข้อมูลซ้ำ รองรับการดูสรุปรายปี รายเดือน รายวัน กรองตามช่วงเวลา ผู้แจ้ง หรือผู้ดำเนินการ แสดงผลเป็นกราฟ และ Export KPI รายเดือนได้",
     tags: ["LIVE", "INTERNAL"],
-    techStack: ["React", "TypeScript", "WebSocket", "Node.js", "Redis"],
-    architecture: "CRDT-inspired state sync ผ่าน WebSocket rooms บน Redis Pub/Sub",
-    infrastructure: "Railway · Cloudflare · GitHub Actions",
-    challenges: "State consistency เมื่อ user reconnect กลางคัน ใช้ snapshot + delta replay",
-    liveUrl: "https://example.com", githubUrl: "https://github.com", videoUrl: "https://youtube.com",
+    techStack: ["Next.js", "JavaScript", "MongoDB", "Docker"],
+    architecture: "Next.js full-stack บน App Router — API Routes จัดการ CRUD และ aggregation pipeline ของ MongoDB สำหรับสรุปสถิติ KPI รายช่วงเวลา พร้อม lookup ข้อมูลผู้ใช้จากเบอร์โทรภายใน",
+    infrastructure: "Vercel · MongoDB Self-hosted · Docker Stack",
+    challenges: "ออกแบบ aggregation pipeline ให้รองรับการกรองและสรุปข้อมูลหลายมิติพร้อมกัน (ช่วงเวลา, ผู้แจ้ง, ผู้ดำเนินการ, ประเภทงาน) โดยไม่กระทบ performance และรองรับ dataset ที่เติบโตต่อเนื่อง",
+    githubUrl: "https://github.com/JimmyJarudat/SPC-IT-Helpdesk",
+    videoUrl: "https://it-helpdesk.jarudat.com",
     images: [
-      "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&q=85",
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85",
+      "/images/project/spc/1.png",
+      "/images/project/spc/4.png",
+      "/images/project/spc/3.png",
+      "/images/project/spc/2.png",
     ],
-    year: 2024, status: "live",
+    year: 2024,
+    status: "live",
   },
+  {
+    id: 5,
+    index: "05",
+    title: "Our Love — Wedding Invitation",
+    subtitle: "Digital wedding invitation web app",
+    overview: "เว็บการ์ดงานแต่งงานดิจิทัลสำหรับงานของ Jimmy & Saran วันที่ 1 มีนาคม 2569 มี Hero Section พร้อม Open Invitation animation, เล่นเพลง background อัตโนมัติ, แสดงเรื่องราวความรัก, Timeline, Pre-wedding Gallery, รายละเอียดงาน และระบบอวยพรออนไลน์ที่ผู้ร่วมงานสามารถฝากคำอวยพรได้จริง",
+    tags: ["LIVE"],
+    techStack: ["React", "TypeScript", "Framer Motion", "Tailwind CSS", "Firebase"],
+    architecture: "Single-page app — component-based แยกแต่ละ section อิสระ ใช้ Framer Motion + react-intersection-observer สำหรับ scroll-triggered animations, useRef จัดการ audio playback และ Firebase Firestore เก็บ/ดึงคำอวยพร real-time",
+    infrastructure: "Vercel · Firebase Firestore · Self-hosted Domain",
+    challenges: "จัดการ autoplay audio policy ของ browser ที่บล็อกการเล่นเพลงอัตโนมัติ โดยผูก audio.play() กับ user gesture (กดปุ่ม Open Invitation) เพื่อให้เพลงเริ่มได้ทันที",
+    liveUrl: "https://ourlove.jarudat.com",
+    githubUrl: "https://github.com/JimmyJarudat/my-invite",
+    images: ["/images/project/ourlove/1.png"],
+    year: 2025,
+    status: "live",
+  },
+  {
+    id: 6,
+    index: "06",
+    title: "IT Helpdesk Mobile",
+    subtitle: "IT job tracking mobile app",
+    overview: "แอปพลิเคชันมือถือสำหรับบันทึกและติดตามงาน IT ภายในองค์กร รองรับการแจ้งปัญหาจากผู้ใช้งานและการลงบันทึกโดยทีม IT แยกประเภทงานเป็น Hardware, Software, User Support และงานประจำ ดูสรุปรายปี รายเดือน รายวัน กรองตามช่วงเวลา ผู้แจ้ง หรือผู้ดำเนินการ แสดงผลเป็นกราฟ  พร้อมรับ Push Notification เมื่อมีงานใหม่เข้าระบบ หรือเมื่อช่างเทคนิคปิดงานเสร็จแล้ว เพื่อให้ Admin รับทราบสถานะแบบ real-time",
+    tags: ["INTERNAL"],
+    techStack: ["React Native", "Firebase Firestore", "Firebase Auth", "Firebase Storage", "FCM"],
+    architecture: "React Native app เชื่อมต่อ Firebase โดยตรง — Firestore สำหรับ CRUD และ real-time listener, Auth จัดการ login/session, Storage เก็บรูปภาพประกอบงาน และ FCM ส่ง push notification เมื่อมีงานใหม่หรืออัปเดตสถานะ",
+    infrastructure: "Firebase Firestore · Firebase Auth · Firebase Storage · FCM · Expo / React Native",
+    challenges: "ออกแบบ Firestore data structure ให้รองรับการ query หลายมิติ (ช่วงเวลา, ผู้แจ้ง, ผู้ดำเนินการ, ประเภทงาน) โดยไม่ต้องใช้ index มากเกินไป และจัดการ FCM token lifecycle เมื่อ user logout หรือเปลี่ยนอุปกรณ์",
+    githubUrl: "https://github.com/JimmyJarudat/Mobile-App-IT-Helpdesk-System",
+    images: [
+      "/images/project/mobile-it/1.png",
+      "/images/project/mobile-it/2.png",
+      "/images/project/mobile-it/3.png",
+      "/images/project/mobile-it/4.png",
+      "/images/project/mobile-it/5.png",
+      "/images/project/mobile-it/6.png",
+      "/images/project/mobile-it/7.png",
+      "/images/project/mobile-it/8.png",
+    ],
+    year: 2025,
+    status: "internal",
+  }
+  // {
+  //   id: 12, index: "12",
+  //   title: "Dev Bootstrapper CLI",
+  //   subtitle: "One-command dev setup",
+  //   overview: "CLI tool spin up development environment พร้อม docker-compose, env setup และ seed data ด้วยคำสั่งเดียว รองรับหลาย project template",
+  //   tags: ["INTERNAL"],
+  //   techStack: ["Go", "Docker", "Shell Script", "YAML"],
+  //   architecture: "Single binary CLI parse config YAML แล้ว orchestrate containers",
+  //   infrastructure: "GitHub Actions · GitHub Packages",
+  //   challenges: "Cross-platform compatibility ระหว่าง macOS Apple Silicon กับ Linux AMD64",
+  //   githubUrl: "https://github.com", videoUrl: "https://youtube.com",
+  //   images: [
+  //     "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=1200&q=85",
+  //     "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
+  //   ],
+  //   year: 2023, status: "internal",
+  // },
+  // {
+  //   id: 4, index: "04",
+  //   title: "Multi-tenant CMS",
+  //   subtitle: "Agency-grade content management",
+  //   overview: "CMS สำหรับ agency ดูแลหลาย client บน domain เดียว แยก content, media และ permission ต่อ tenant ด้วย row-level security",
+  //   tags: ["LIVE", "SAAS", "CLIENT"],
+  //   techStack: ["Next.js", "Prisma", "PostgreSQL", "S3", "Cloudflare"],
+  //   architecture: "Row-level security + subdomain routing สำหรับ tenant isolation",
+  //   infrastructure: "Vercel · Cloudflare R2 · Supabase · GitHub Actions",
+  //   challenges: "Media CDN serve ไฟล์ถูก tenant ไม่ leak ข้ามกัน ใช้ signed URL + edge middleware",
+  //   liveUrl: "https://example.com", githubUrl: "https://github.com",
+  //   images: [
+  //     "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=85",
+  //     "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=85",
+  //     "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=1200&q=85",
+  //   ],
+  //   year: 2024, status: "live",
+  // },
+  // {
+  //   id: 5, index: "05",
+  //   title: "CI/CD Pipeline Template",
+  //   subtitle: "Reusable deployment workflow",
+  //   overview: "Reusable GitHub Actions workflow สำหรับ Node.js/Docker ครอบคลุม test, build, deploy และ rollback พร้อม Slack notification",
+  //   tags: ["INTERNAL"],
+  //   techStack: ["GitHub Actions", "Docker", "Shell", "YAML"],
+  //   architecture: "Composite actions แยก reusable steps เป็น modules",
+  //   infrastructure: "GitHub Actions · Docker Hub · Self-hosted Runner",
+  //   challenges: "Deploy time < 3 นาที ด้วย layer caching + parallel job",
+  //   githubUrl: "https://github.com", videoUrl: "https://youtube.com",
+  //   images: [
+  //     "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
+  //   ],
+  //   year: 2023, status: "internal",
+  // },
+  // {
+  //   id: 6, index: "06",
+  //   title: "Realtime Collab Tool",
+  //   subtitle: "Sprint planning with live sync",
+  //   overview: "Web app สำหรับ team sprint planning ร่วมกัน รองรับ voting, timer และ sync state แบบ real-time ด้วย WebSocket",
+  //   tags: ["LIVE", "INTERNAL"],
+  //   techStack: ["React", "TypeScript", "WebSocket", "Node.js", "Redis"],
+  //   architecture: "CRDT-inspired state sync ผ่าน WebSocket rooms บน Redis Pub/Sub",
+  //   infrastructure: "Railway · Cloudflare · GitHub Actions",
+  //   challenges: "State consistency เมื่อ user reconnect กลางคัน ใช้ snapshot + delta replay",
+  //   liveUrl: "https://example.com", githubUrl: "https://github.com", videoUrl: "https://youtube.com",
+  //   images: [
+  //     "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&q=85",
+  //     "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85",
+  //   ],
+  //   year: 2024, status: "live",
+  // },
 ];
 
 const STATUS_DOT = {
@@ -387,20 +452,32 @@ const ProjectsPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<Filter>("ALL");
-  const [selectedId, setSelectedId] = useState<number>(1);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
+  // ① filtered ต้องมาก่อน
   const filtered = activeFilter === "ALL"
     ? PROJECTS
     : PROJECTS.filter((p) => p.tags.includes(activeFilter));
 
+  // ② แล้วค่อย selectedId
+  const tabParam = searchParams.get("tab");
+  const selectedId = (() => {
+    if (!tabParam) return PROJECTS[0].id;
+    const match = PROJECTS.find((p) => p.title.replace(/\s+/g, "-") === tabParam);
+    return match?.id ?? PROJECTS[0].id;
+  })();
+
+  // ③ แล้วค่อย project
   const project = filtered.find((p) => p.id === selectedId) ?? filtered[0];
 
-  // auto-select first when filter changes
+  // ④ useEffect
   useEffect(() => {
     if (filtered.length > 0 && !filtered.find((p) => p.id === selectedId)) {
-      setSelectedId(filtered[0].id);
+      const slug = filtered[0].title.replace(/\s+/g, "-");
+      navigate(`/project?tab=${slug}`);
     }
   }, [activeFilter]);
 
@@ -465,7 +542,10 @@ const ProjectsPage = () => {
                 return (
                   <div
                     key={p.id}
-                    onClick={() => setSelectedId(p.id)}
+                    onClick={() => {
+                      const slug = p.title.replace(/\s+/g, "-");
+                      navigate(`/project?tab=${slug}`);
+                    }}
                     className={`relative pr-4 py-4 border-b cursor-pointer transition-colors duration-150
                       ${sel
                         ? isDark ? "bg-white/[0.02]" : "bg-accent/[0.04]"
