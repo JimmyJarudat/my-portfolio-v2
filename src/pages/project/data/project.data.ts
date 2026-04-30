@@ -19,7 +19,7 @@ export const PROJECTS: Project[] = [
     ],
     architecture: "Monorepo full-stack — Elysia.js REST API + dual Prisma client แยก MariaDB/SQL Server พร้อม Debezium CDC sync สองทิศทาง และ Redis สำหรับ caching/queue",
     infrastructure: "Docker Swarm · Nginx Proxy Manager · Self-hosted · GitHub Actions · Docker Hub",
-    challenges: "Sync ข้อมูลสองทาง MariaDB↔SQL Server แบบ real-time ด้วย Debezium CDC รองรับ Thai encoding (windows-874→UTF-8), deadlock handling, IDENTITY_INSERT และการจัดการ cache consistency ผ่าน Redis",
+    challenges: "Sync ข้อมูลสองทาง MariaDB↔SQL Server แบบ real-time ด้วย Debezium CDC รองรับ Thai encoding (windows-874→UTF-8), deadlock handling, IDENTITY_INSERT และการจัดการ cache consistency ผ่าน Redis รวมถึงพัฒนา PowerShell migration script สำหรับ initial data migration พร้อม batch processing และแจ้งเตือนผ่าน Telegram",
     images: [
       "/images/project/nova/login.png",
       "/images/project/nova/dashboard_carton.png",
@@ -94,7 +94,7 @@ export const PROJECTS: Project[] = [
     year: 2024,
     status: "live",
   },
-   {
+  {
     id: 5,
     index: "05",
     title: "IT Helpdesk Mobile",
@@ -156,7 +156,7 @@ export const PROJECTS: Project[] = [
     year: 2025,
     status: "live",
   },
- 
+
   {
     id: 8,
     index: "08",
@@ -180,6 +180,45 @@ export const PROJECTS: Project[] = [
     year: 2023,
     status: "internal",
   },
+  {
+    id: 9,
+    index: "09",
+    title: "GitHub Actions CI/CD",
+    subtitle: "Automated build, merge & deploy pipeline",
+    overview: "GitHub Actions workflow สำหรับ Nova Platform ครอบคลุม auto merge จาก dev → main เมื่อ commit message มี keyword กำหนด, build Docker image พร้อม version tag จาก package.json, push ขึ้น Docker Hub รองรับ multi-platform (amd64/arm64) และแจ้งเตือนผลทุกขั้นตอนผ่าน Telegram",
+    tags: ["INTERNAL"],
+    techStack: ["GitHub Actions", "Docker", "Docker Hub", "Telegram Bot"],
+    architecture: "2 workflows แยกหน้าที่ — auto-merge trigger จาก commit message, build API image (amd64) และ build Web image (amd64) พร้อม inject env vars ผ่าน build-args ใช้ GHA cache เพื่อเร่ง build time",
+    infrastructure: "GitHub Actions · Docker Hub · Docker Buildx · Telegram Bot API",
+    challenges: "ออกแบบ trigger ที่ยืดหยุ่นด้วย commit message keyword แทน branch protection rule และจัดการ recreate dev branch หลัง merge เพื่อให้ทีม checkout dev branch ใหม่ได้ทันที พร้อม notify ทุก step ผ่าน Telegram",
+    images: [
+      "/images/project/nova/action.png",
+      "/images/project/nova/action1.png",
+    ],
+    year: 2025,
+    status: "internal",
+  },
+  {
+    id: 10,
+    index: "10",
+    title: "IT Management Portal",
+    subtitle: "IT jobs, ISO assets & mail quota dashboard",
+    overview: "ระบบจัดการงาน IT ภายในองค์กรแบบครบวงจร ครอบคลุมการลงบันทึกงาน IT, ตรวจสอบพื้นที่อีเมล IMAP ผ่าน cron job และแจ้งเตือนทุก 08.00 น., เชื่อมต่อ Snipe-IT API เพื่อดึงข้อมูลทะเบียนอุปกรณ์และซอฟต์แวร์มาแสดงผลและ export เป็นแบบฟอร์ม, บันทึกประวัติการซ่อมบำรุง และจัดการสิทธิ์การเข้าถึงที่ sync ผ่าน PowerShell script แล้วบันทึกลงฐานข้อมูล",
+    tags: ["INTERNAL"],
+    techStack: ["Vite", "React", "Elysia.js", "SQL Server", "Snipe-IT API", "PowerShell"],
+    architecture: "Vite + React frontend เชื่อมต่อ Elysia.js REST API — SQL Server เก็บข้อมูลงาน IT และสิทธิ์การเข้าถึง, Snipe-IT API สำหรับดึงข้อมูล ISO assets, cron job ตรวจสอบ IMAP mail quota และส่งแจ้งเตือนตามเวลา",
+    infrastructure: "Self-hosted · Docker · SQL Server · Snipe-IT",
+    challenges: "ออกแบบ sync สิทธิ์การเข้าถึงจาก PowerShell script เข้า SQL Server ให้ idempotent รันซ้ำได้ไม่จำกัดครั้ง และจัดการ cron job ตรวจสอบ IMAP quota หลาย account พร้อมกันโดยไม่ block request อื่น",
+    images: [
+      "/images/project/nova/80.png",
+      "/images/project/nova/81.png",
+      "/images/project/nova/82.png",
+      "/images/project/nova/83.png",
+      "/images/project/nova/85.png",
+    ],
+    year: 2025,
+    status: "internal",
+  }
 
   // {
   //   id: 12, index: "12",
