@@ -27,37 +27,76 @@ interface Project {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const PROJECTS: Project[] = [
   {
-    id: 1, index: "01",
+    id: 1,
+    index: "01",
     title: "Nova Platform",
     subtitle: "File & Warehouse Management System",
-    overview: "ระบบบริหารจัดการไฟล์และโกดังแบบครบวงจรสำหรับใช้งานภายในองค์กร พัฒนาด้วย React + TypeScript ฝั่ง Frontend และ Elysia.js + Prisma ORM ฝั่ง Backend เชื่อมต่อฐานข้อมูลคู่ขนาน MariaDB และ SQL Server ผ่าน dual Prisma client พร้อมระบบ Debezium CDC sync ข้อมูลสองทิศทางแบบ real-time รองรับการแสดงผลโกดังในรูปแบบ 3D Visualization ด้วย React Three Fiber คำนวณพื้นที่จัดเก็บและแนะนำตำแหน่งวางกล่องเอกสารอัตโนมัติผ่าน suggestSpace algorithm นอกจากนี้ยังมีระบบ IT Job Management เชื่อมต่อ Nextcloud WebDAV สำหรับจัดการไฟล์งาน และระบบ Auth ที่รองรับ httpOnly cookie session, bcrypt, 2FA และ account lockout ทั้งหมด deploy บน Docker Swarm ผ่าน Nginx Proxy Manager",
+    overview: "ระบบบริหารจัดการไฟล์และโกดังแบบครบวงจรสำหรับใช้งานภายในองค์กร พัฒนาด้วย React + TypeScript ฝั่ง Frontend และ Elysia.js + Prisma ORM ฝั่ง Backend เชื่อมต่อฐานข้อมูลคู่ขนาน MariaDB และ SQL Server ผ่าน dual Prisma client พร้อมระบบ Debezium CDC sync ข้อมูลสองทิศทางแบบ real-time รองรับการแสดงผลโกดังในรูปแบบ 3D Visualization ด้วย React Three Fiber คำนวณพื้นที่จัดเก็บและแนะนำตำแหน่งวางกล่องเอกสารอัตโนมัติผ่าน suggestSpace algorithm นอกจากนี้ยังมีระบบ IT Job Management เชื่อมต่อ Nextcloud WebDAV สำหรับจัดการไฟล์งาน และระบบ Auth ที่รองรับ httpOnly cookie session, bcrypt, 2FA และ account lockout พร้อมใช้งาน Redis สำหรับ caching และ session management ทั้งหมด deploy บน Docker Swarm ผ่าน Nginx Proxy Manager",
     tags: ["INTERNAL"],
-    techStack: ["React", "TypeScript", "Elysia.js", "Prisma", "SQL Server", "MariaDB", "Docker"],
-    architecture: "Monorepo full-stack — Elysia.js REST API + dual Prisma client แยก MariaDB/SQL Server พร้อม Debezium CDC sync สองทิศทาง",
-    infrastructure: "Docker Swarm · Nginx Proxy Manager · Self-hosted · GitLab CI",
-    challenges: "Sync ข้อมูลสองทาง MariaDB↔SQL Server แบบ real-time ด้วย Debezium CDC รองรับ Thai encoding (windows-874→UTF-8), deadlock handling และ IDENTITY_INSERT",
-    images: [
-      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=85",
-      "https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=85",
-      "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=1200&q=85",
+    techStack: [
+      "React",
+      "TypeScript",
+      "Elysia.js",
+      "Prisma",
+      "SQL Server",
+      "MariaDB",
+      "Redis",
+      "Docker"
     ],
-    year: 2025, status: "internal",
+    architecture: "Monorepo full-stack — Elysia.js REST API + dual Prisma client แยก MariaDB/SQL Server พร้อม Debezium CDC sync สองทิศทาง และ Redis สำหรับ caching/queue",
+    infrastructure: "Docker Swarm · Nginx Proxy Manager · Self-hosted · GitHub Actions · Docker Hub",
+    challenges: "Sync ข้อมูลสองทาง MariaDB↔SQL Server แบบ real-time ด้วย Debezium CDC รองรับ Thai encoding (windows-874→UTF-8), deadlock handling, IDENTITY_INSERT และการจัดการ cache consistency ผ่าน Redis",
+    images: [
+      "/images/project/nova/login.png",
+      "/images/project/nova/dashboard_carton.png",
+      "/images/project/nova/history.png",
+      "/images/project/nova/history1.png",
+      "/images/project/nova/3d.png",
+      "/images/project/nova/monitor.png",
+    ],
+    year: 2025,
+    status: "internal",
   },
   {
     id: 2, index: "02",
-    title: "Jupiter IPTV",
+    title: "IPTV Horizon",
     subtitle: "Android TV Box Management Platform",
-    overview: "ระบบบริหารจัดการผู้ใช้งานและอุปกรณ์ Android TV Box แบบครบวงจร ทำหน้าที่เป็น API หลักที่ทีมพัฒนา Hardware ฝั่งไต้หวัน call เข้ามาเพื่อ activate device, sync สถานะอุปกรณ์ และจัดการ subscription lifecycle ครอบคลุมตั้งแต่การ activate, suspend, cancel ทั้งแบบ immediate และ expire รองรับระบบ Reseller และตัวแทนจำหน่าย, จัดการ Package และ Plan, ชำระเงินผ่าน QR Code ที่เชื่อมต่อกับ Internal Payment Gateway ของทีม ตรวจสอบสถานะผ่าน webhook พร้อม duplicate protection และ signature verification, ออก invoice และ billing อัตโนมัติ พร้อม Report และ Dashboard สำหรับทีม Back Office และ Call Center ควบคุมสิทธิ์ผ่าน permission matrix ครอบคลุม 16 roles",
+    overview: "ระบบบริหารจัดการผู้ใช้งานและอุปกรณ์ Android TV Box แบบครบวงจร ทำหน้าที่เป็น API หลักที่ทีมพัฒนา Hardware ฝั่งไต้หวัน call เข้ามาเพื่อ activate device, sync สถานะอุปกรณ์ และจัดการ subscription lifecycle ครอบคลุมตั้งแต่การ activate, suspend, cancel ทั้งแบบ immediate และ expire รองรับระบบ Reseller และตัวแทนจำหน่าย, จัดการ Package และ Plan, ชำระเงินผ่าน QR Code ที่เชื่อมต่อกับ Internal Payment Gateway ของทีม ตรวจสอบสถานะผ่าน webhook พร้อม duplicate protection และ signature verification, ออก invoice และ billing อัตโนมัติ พร้อม Report และ Dashboard สำหรับทีม Back Office และ Call Center ควบคุมสิทธิ์ผ่าน permission matrix ",
     tags: ["CLIENT"],
-    techStack: ["NestJS", "React", "TypeScript", "PostgreSQL", "Internal Payment Gateway"],
-    architecture: "REST API กลางรองรับ Taiwan hardware team call เข้า + internal GUI — แยก module ชัดเจนครอบคลุม device management, subscription lifecycle, reseller system, payment webhook และ billing",
+    techStack: ["NestJS", "React", "TypeScript", "SQL Server", "Internal Payment Gateway"],
+    architecture: "Centralized REST API (NestJS) ทำหน้าที่เป็น backend หลักสำหรับ device management, subscription lifecycle, reseller system และ payment webhook โดยจัดการ logic ภายใน service layer เดียว พร้อมออกแบบให้ webhook handling เป็น idempotent (duplicate-safe) และรองรับ retry จาก provider",
+
     infrastructure: "Docker · Nginx · Self-hosted",
-    challenges: "ออกแบบ API contract ให้ Taiwan call ได้ถูกต้องทุก flow, จัดการ webhook จาก internal payment gateway ให้รองรับ duplicate protection, verify signature และ background process อย่างปลอดภัย รวมถึง permission matrix 16 roles ให้ครอบคลุมทุก workflow ของ Call Center และ Reseller",
+    challenges: "ออกแบบ API contract ให้รองรับ external hardware team (Taiwan) แบบ strict schema และ versioning, จัดการ webhook จาก payment gateway ให้ idempotent (duplicate-safe) และรองรับ retry อย่างปลอดภัย พร้อม verify signature และออกแบบ permission matrix ให้ครอบคลุมหลาย role และ workflow ภายในระบบ",
     images: [
-      "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&q=85",
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85",
+      "/images/project/iptv/dash1.png",
+      "/images/project/iptv/cus.png",
+      "/images/project/iptv/job.png",
+      "/images/project/iptv/inv.png",
+      "/images/project/iptv/rec.png",
+
     ],
     year: 2024, status: "client",
+  },
+  {
+    id: 3,
+    index: "03",
+    title: "PC PM Auto-Report",
+    subtitle: "One-script preventive maintenance audit",
+    overview: "PowerShell script ตรวจสอบระบบคอมพิวเตอร์ตามแผน PM อัตโนมัติ ครอบคลุม Hardware, Software, Network, Security, Backup และ UPS แล้วสร้าง HTML Report พร้อม Tab Navigation ส่งออกเป็นไฟล์รายงานโดยอัตโนมัติ",
+    tags: ["INTERNAL"],
+    techStack: ["PowerShell", "CIM/WMI", "HTML/CSS", "Batch Script"],
+    architecture: "BAT launcher คัดลอก script จาก network share มายัง C:\\PM แล้ว detect PowerShell version (5.x / 7+) ก่อนรัน script หลักที่ query ข้อมูลผ่าน CIM/WMI แล้ว render HTML report ทันที",
+    infrastructure: "Network Share (\\\\<host>\\Program\\script_report) · Local C:\\PM · Windows Task or Manual Run",
+    challenges: "Cross-version compatibility ระหว่าง Windows PowerShell 5.x กับ PowerShell 7+ โดยเฉพาะ ternary operator syntax ที่ต้อง transpile on-the-fly, และการดึง Security Policy ที่ต้องการสิทธิ์ Admin",
+    githubUrl: "https://github.com",
+    videoUrl: "https://youtube.com",
+    images: [
+      "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=1200&q=85",
+      "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
+    ],
+    year: 2025,
+    status: "internal",
   },
   {
     id: 3, index: "03",
@@ -129,28 +168,34 @@ const PROJECTS: Project[] = [
   },
 ];
 
-const STATUS_DOT: Record<string, string> = {
-  live: "bg-emerald-400",
-  client: "bg-yellow-400",
-  internal: "bg-blue-400",
+const STATUS_DOT = {
+  live: "bg-violet-500",
+  client: "bg-sky-500",
+  internal: "bg-slate-500",
 };
-const STATUS_TEXT: Record<string, string> = {
-  live: "text-emerald-400",
-  client: "text-yellow-400",
-  internal: "text-blue-400",
+
+const STATUS_TEXT = {
+  live: "text-violet-600",
+  client: "text-sky-600",
+  internal: "text-slate-600",
 };
-const STATUS_BORDER: Record<string, string> = {
-  live: "border-emerald-400/30",
-  client: "border-yellow-400/30",
-  internal: "border-blue-400/30",
+
+const STATUS_BORDER = {
+  live: "border-violet-400/30",
+  client: "border-sky-400/30",
+  internal: "border-slate-400/30",
 };
-const STATUS_BG: Record<string, string> = {
-  live: "bg-emerald-400/10",
-  client: "bg-yellow-400/10",
-  internal: "bg-blue-400/10",
+
+const STATUS_BG = {
+  live: "bg-violet-500/15",
+  client: "bg-sky-500/15",
+  internal: "bg-slate-500/15",
 };
-const STATUS_LABEL: Record<string, string> = {
-  live: "LIVE", client: "CLIENT", internal: "INTERNAL",
+
+const STATUS_LABEL = {
+  live: "LIVE",
+  client: "CLIENT",
+  internal: "INTERNAL",
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -199,7 +244,7 @@ const ImageSlider = ({
     <div className="relative rounded-xl overflow-hidden border border-white/10 mb-7 group">
       {/* Image */}
       <div
-        className="relative h-[260px] overflow-hidden cursor-zoom-in"
+        className="relative aspect-[16/9] overflow-hidden cursor-zoom-in"
         onClick={() => onLightbox(cur)}
       >
         <img
@@ -281,7 +326,9 @@ const Lightbox = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-black/94 flex items-center justify-center cursor-zoom-out"
+      className="fixed inset-0 z-[9999]
+             bg-black/60 backdrop-blur-lg
+             flex items-center justify-center cursor-zoom-out"
       onClick={onClose}
     >
       <img
