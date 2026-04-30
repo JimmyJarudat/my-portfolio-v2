@@ -218,6 +218,25 @@ export const PROJECTS: Project[] = [
     ],
     year: 2025,
     status: "internal",
+  },
+  {
+    id: 11,
+    index: "11",
+    title: "Dryer Queue Monitor",
+    subtitle: "Industrial furnace scheduling & utilization dashboard",
+    overview: "ระบบ monitoring และติดตามคิวการใช้งานเตาเผาอุตสาหกรรม แสดงผลรายเดือนในรูปแบบ Daily View matrix และ Timeline View รายชั่วโมง แยกสถานะแต่ละ Step การทำงาน (Step 1-3) และ Maintenance พร้อมคำนวณ Utilization % ของแต่ละเครื่องอัตโนมัติ รองรับการ drag select หลายเครื่องหลายวันพร้อมกัน",
+    tags: ["CLIENT"],
+    techStack: ["Next.js", "TypeScript", "Prisma", "MariaDB"],
+    architecture: "Next.js App Router — API Route ดึงข้อมูล working_time_list และ maintenance จาก MariaDB ด้วย Raw SQL เพื่อหลีกเลี่ยง timezone conversion, Prisma ORM สำหรับ query ทั่วไป และ client-side คำนวณ step overlap per hour สำหรับ Timeline View",
+    infrastructure: "Self-hosted · Docker · MariaDB · Nginx",
+    challenges: "จัดการ timezone และ datetime string จาก MariaDB โดยใช้ DATE_FORMAT ใน Raw SQL แทน Prisma เพื่อป้องกัน UTC offset shift และออกแบบ algorithm ตรวจสอบ step overlap รายชั่วโมงสำหรับ Timeline View ที่รองรับ step ข้ามวัน",
+    images: [
+      "/images/project/spc/11.png",
+      "/images/project/spc/12.png",
+      
+    ],
+    year: 2025,
+    status: "client",
   }
 
   // {
