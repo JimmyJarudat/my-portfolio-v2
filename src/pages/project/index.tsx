@@ -1,451 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Globe, Github, Video, ChevronLeft, ChevronRight } from "lucide-react";
+import { PROJECTS } from "./data/project.data";
+import { ImageSlider } from "./components/ImageSlider";
+import { Lightbox } from "./components/Lightbox";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 const FILTERS = ["ALL", "LIVE", "CLIENT", "INTERNAL", "SAAS"] as const;
 type Filter = (typeof FILTERS)[number];
 
-interface Project {
-  id: number;
-  index: string;
-  title: string;
-  subtitle: string;
-  overview: string;
-  tags: Filter[];
-  techStack: string[];
-  architecture: string;
-  infrastructure: string;
-  challenges: string;
-  liveUrl?: string;
-  githubUrl?: string;
-  videoUrl?: string;
-  images: string[];
-  year: number;
-  status: "live" | "internal" | "client";
-}
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-const PROJECTS: Project[] = [
-  {
-    id: 1,
-    index: "01",
-    title: "Nova Platform",
-    subtitle: "File & Warehouse Management System",
-    overview: "ระบบบริหารจัดการไฟล์และโกดังแบบครบวงจรสำหรับใช้งานภายในองค์กร พัฒนาด้วย React + TypeScript ฝั่ง Frontend และ Elysia.js + Prisma ORM ฝั่ง Backend เชื่อมต่อฐานข้อมูลคู่ขนาน MariaDB และ SQL Server ผ่าน dual Prisma client พร้อมระบบ Debezium CDC sync ข้อมูลสองทิศทางแบบ real-time รองรับการแสดงผลโกดังในรูปแบบ 3D Visualization ด้วย React Three Fiber คำนวณพื้นที่จัดเก็บและแนะนำตำแหน่งวางกล่องเอกสารอัตโนมัติผ่าน suggestSpace algorithm นอกจากนี้ยังมีระบบ IT Job Management เชื่อมต่อ Nextcloud WebDAV สำหรับจัดการไฟล์งาน และระบบ Auth ที่รองรับ httpOnly cookie session, bcrypt, 2FA และ account lockout พร้อมใช้งาน Redis สำหรับ caching และ session management ทั้งหมด deploy บน Docker Swarm ผ่าน Nginx Proxy Manager",
-    tags: ["INTERNAL"],
-    techStack: [
-      "React",
-      "TypeScript",
-      "Elysia.js",
-      "Prisma",
-      "SQL Server",
-      "MariaDB",
-      "Redis",
-      "Docker"
-    ],
-    architecture: "Monorepo full-stack — Elysia.js REST API + dual Prisma client แยก MariaDB/SQL Server พร้อม Debezium CDC sync สองทิศทาง และ Redis สำหรับ caching/queue",
-    infrastructure: "Docker Swarm · Nginx Proxy Manager · Self-hosted · GitHub Actions · Docker Hub",
-    challenges: "Sync ข้อมูลสองทาง MariaDB↔SQL Server แบบ real-time ด้วย Debezium CDC รองรับ Thai encoding (windows-874→UTF-8), deadlock handling, IDENTITY_INSERT และการจัดการ cache consistency ผ่าน Redis",
-    images: [
-      "/images/project/nova/login.png",
-      "/images/project/nova/dashboard_carton.png",
-      "/images/project/nova/history.png",
-      "/images/project/nova/history1.png",
-      "/images/project/nova/3d.png",
-      "/images/project/nova/monitor.png",
-    ],
-    year: 2025,
-    status: "internal",
-  },
-  {
-    id: 2, index: "02",
-    title: "IPTV Horizon",
-    subtitle: "Android TV Box Management Platform",
-    overview: "ระบบบริหารจัดการผู้ใช้งานและอุปกรณ์ Android TV Box แบบครบวงจร ทำหน้าที่เป็น API หลักที่ทีมพัฒนา Hardware ฝั่งไต้หวัน call เข้ามาเพื่อ activate device, sync สถานะอุปกรณ์ และจัดการ subscription lifecycle ครอบคลุมตั้งแต่การ activate, suspend, cancel ทั้งแบบ immediate และ expire รองรับระบบ Reseller และตัวแทนจำหน่าย, จัดการ Package และ Plan, ชำระเงินผ่าน QR Code ที่เชื่อมต่อกับ Internal Payment Gateway ของทีม ตรวจสอบสถานะผ่าน webhook พร้อม duplicate protection และ signature verification, ออก invoice และ billing อัตโนมัติ พร้อม Report และ Dashboard สำหรับทีม Back Office และ Call Center ควบคุมสิทธิ์ผ่าน permission matrix ",
-    tags: ["CLIENT"],
-    techStack: ["NestJS", "React", "TypeScript", "SQL Server", "Internal Payment Gateway"],
-    architecture: "Centralized REST API (NestJS) ทำหน้าที่เป็น backend หลักสำหรับ device management, subscription lifecycle, reseller system และ payment webhook โดยจัดการ logic ภายใน service layer เดียว พร้อมออกแบบให้ webhook handling เป็น idempotent (duplicate-safe) และรองรับ retry จาก provider",
-
-    infrastructure: "Docker · Nginx · Self-hosted",
-    challenges: "ออกแบบ API contract ให้รองรับ external hardware team (Taiwan) แบบ strict schema และ versioning, จัดการ webhook จาก payment gateway ให้ idempotent (duplicate-safe) และรองรับ retry อย่างปลอดภัย พร้อม verify signature และออกแบบ permission matrix ให้ครอบคลุมหลาย role และ workflow ภายในระบบ",
-    images: [
-      "/images/project/iptv/dash1.png",
-      "/images/project/iptv/cus.png",
-      "/images/project/iptv/job.png",
-      "/images/project/iptv/inv.png",
-      "/images/project/iptv/rec.png",
-
-    ],
-    year: 2024, status: "client",
-  },
-  {
-    id: 3,
-    index: "03",
-    title: "PC PM Auto-Report",
-    subtitle: "One-script preventive maintenance audit",
-    overview: "PowerShell script ตรวจสอบระบบคอมพิวเตอร์ตามแผน PM อัตโนมัติ ครอบคลุม Hardware, Software, Network, Security, Backup และ UPS แล้วสร้าง HTML Report พร้อม Tab Navigation ส่งออกเป็นไฟล์รายงานโดยอัตโนมัติ",
-    tags: ["INTERNAL"],
-    techStack: ["PowerShell", "CIM/WMI", "HTML/CSS", "Batch Script"],
-    architecture: "BAT launcher คัดลอก script จาก network share มายัง C:\\PM แล้ว detect PowerShell version (5.x / 7+) ก่อนรัน script หลักที่ query ข้อมูลผ่าน CIM/WMI แล้ว render HTML report ทันที",
-    infrastructure: "Network Share (\\\\<host>\\Program\\script_report) · Local C:\\PM · Windows Task or Manual Run",
-    challenges: "Cross-version compatibility ระหว่าง Windows PowerShell 5.x กับ PowerShell 7+ โดยเฉพาะ ternary operator syntax ที่ต้อง transpile on-the-fly, และการดึง Security Policy ที่ต้องการสิทธิ์ Admin",
-    githubUrl: "https://github.com/JimmyJarudat/PC-PM-Auto-Report",
-    videoUrl: "https://youtu.be/ryRkyzrWuHc",
-    images: [
-      "/images/project/pm/pm.png",
-    ],
-    year: 2025,
-    status: "internal",
-  },
-  {
-    id: 4,
-    index: "04",
-    title: "SPC IT Helpdesk",
-    subtitle: "Internal IT job tracking & KPI dashboard",
-    overview: "ระบบบันทึกและติดตามงาน IT ภายในองค์กร รองรับการแจ้งปัญหาจากผู้ใช้งานและการลงบันทึกโดยทีม IT แยกประเภทงานเป็น Hardware, Software, User Support และงานประจำ สามารถค้นหาข้อมูลเจ้าของเบอร์โทรภายใน 3 หลักได้ทันที โดยไม่ต้องกรอกข้อมูลซ้ำ รองรับการดูสรุปรายปี รายเดือน รายวัน กรองตามช่วงเวลา ผู้แจ้ง หรือผู้ดำเนินการ แสดงผลเป็นกราฟ และ Export KPI รายเดือนได้",
-    tags: ["LIVE", "INTERNAL"],
-    techStack: ["Next.js", "JavaScript", "MongoDB", "Docker"],
-    architecture: "Next.js full-stack บน App Router — API Routes จัดการ CRUD และ aggregation pipeline ของ MongoDB สำหรับสรุปสถิติ KPI รายช่วงเวลา พร้อม lookup ข้อมูลผู้ใช้จากเบอร์โทรภายใน",
-    infrastructure: "Vercel · MongoDB Self-hosted · Docker Stack",
-    challenges: "ออกแบบ aggregation pipeline ให้รองรับการกรองและสรุปข้อมูลหลายมิติพร้อมกัน (ช่วงเวลา, ผู้แจ้ง, ผู้ดำเนินการ, ประเภทงาน) โดยไม่กระทบ performance และรองรับ dataset ที่เติบโตต่อเนื่อง",
-    githubUrl: "https://github.com/JimmyJarudat/SPC-IT-Helpdesk",
-    videoUrl: "https://it-helpdesk.jarudat.com",
-    images: [
-      "/images/project/spc/1.png",
-      "/images/project/spc/4.png",
-      "/images/project/spc/3.png",
-      "/images/project/spc/2.png",
-    ],
-    year: 2024,
-    status: "live",
-  },
-  {
-    id: 5,
-    index: "05",
-    title: "Our Love — Wedding Invitation",
-    subtitle: "Digital wedding invitation web app",
-    overview: "เว็บการ์ดงานแต่งงานดิจิทัลสำหรับงานของ Jimmy & Saran วันที่ 1 มีนาคม 2569 มี Hero Section พร้อม Open Invitation animation, เล่นเพลง background อัตโนมัติ, แสดงเรื่องราวความรัก, Timeline, Pre-wedding Gallery, รายละเอียดงาน และระบบอวยพรออนไลน์ที่ผู้ร่วมงานสามารถฝากคำอวยพรได้จริง",
-    tags: ["LIVE"],
-    techStack: ["React", "TypeScript", "Framer Motion", "Tailwind CSS", "Firebase"],
-    architecture: "Single-page app — component-based แยกแต่ละ section อิสระ ใช้ Framer Motion + react-intersection-observer สำหรับ scroll-triggered animations, useRef จัดการ audio playback และ Firebase Firestore เก็บ/ดึงคำอวยพร real-time",
-    infrastructure: "Vercel · Firebase Firestore · Self-hosted Domain",
-    challenges: "จัดการ autoplay audio policy ของ browser ที่บล็อกการเล่นเพลงอัตโนมัติ โดยผูก audio.play() กับ user gesture (กดปุ่ม Open Invitation) เพื่อให้เพลงเริ่มได้ทันที",
-    liveUrl: "https://ourlove.jarudat.com",
-    githubUrl: "https://github.com/JimmyJarudat/my-invite",
-    images: ["/images/project/ourlove/1.png"],
-    year: 2025,
-    status: "live",
-  },
-  {
-    id: 6,
-    index: "06",
-    title: "IT Helpdesk Mobile",
-    subtitle: "IT job tracking mobile app",
-    overview: "แอปพลิเคชันมือถือสำหรับบันทึกและติดตามงาน IT ภายในองค์กร รองรับการแจ้งปัญหาจากผู้ใช้งานและการลงบันทึกโดยทีม IT แยกประเภทงานเป็น Hardware, Software, User Support และงานประจำ ดูสรุปรายปี รายเดือน รายวัน กรองตามช่วงเวลา ผู้แจ้ง หรือผู้ดำเนินการ แสดงผลเป็นกราฟ  พร้อมรับ Push Notification เมื่อมีงานใหม่เข้าระบบ หรือเมื่อช่างเทคนิคปิดงานเสร็จแล้ว เพื่อให้ Admin รับทราบสถานะแบบ real-time",
-    tags: ["INTERNAL"],
-    techStack: ["React Native", "Firebase Firestore", "Firebase Auth", "Firebase Storage", "FCM"],
-    architecture: "React Native app เชื่อมต่อ Firebase โดยตรง — Firestore สำหรับ CRUD และ real-time listener, Auth จัดการ login/session, Storage เก็บรูปภาพประกอบงาน และ FCM ส่ง push notification เมื่อมีงานใหม่หรืออัปเดตสถานะ",
-    infrastructure: "Firebase Firestore · Firebase Auth · Firebase Storage · FCM · Expo / React Native",
-    challenges: "ออกแบบ Firestore data structure ให้รองรับการ query หลายมิติ (ช่วงเวลา, ผู้แจ้ง, ผู้ดำเนินการ, ประเภทงาน) โดยไม่ต้องใช้ index มากเกินไป และจัดการ FCM token lifecycle เมื่อ user logout หรือเปลี่ยนอุปกรณ์",
-    githubUrl: "https://github.com/JimmyJarudat/Mobile-App-IT-Helpdesk-System",
-    images: [
-      "/images/project/mobile-it/1.png",
-      "/images/project/mobile-it/2.png",
-      "/images/project/mobile-it/3.png",
-      "/images/project/mobile-it/4.png",
-      "/images/project/mobile-it/5.png",
-      "/images/project/mobile-it/6.png",
-      "/images/project/mobile-it/7.png",
-      "/images/project/mobile-it/8.png",
-    ],
-    year: 2025,
-    status: "internal",
-  }
-  // {
-  //   id: 12, index: "12",
-  //   title: "Dev Bootstrapper CLI",
-  //   subtitle: "One-command dev setup",
-  //   overview: "CLI tool spin up development environment พร้อม docker-compose, env setup และ seed data ด้วยคำสั่งเดียว รองรับหลาย project template",
-  //   tags: ["INTERNAL"],
-  //   techStack: ["Go", "Docker", "Shell Script", "YAML"],
-  //   architecture: "Single binary CLI parse config YAML แล้ว orchestrate containers",
-  //   infrastructure: "GitHub Actions · GitHub Packages",
-  //   challenges: "Cross-platform compatibility ระหว่าง macOS Apple Silicon กับ Linux AMD64",
-  //   githubUrl: "https://github.com", videoUrl: "https://youtube.com",
-  //   images: [
-  //     "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=1200&q=85",
-  //     "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
-  //   ],
-  //   year: 2023, status: "internal",
-  // },
-  // {
-  //   id: 4, index: "04",
-  //   title: "Multi-tenant CMS",
-  //   subtitle: "Agency-grade content management",
-  //   overview: "CMS สำหรับ agency ดูแลหลาย client บน domain เดียว แยก content, media และ permission ต่อ tenant ด้วย row-level security",
-  //   tags: ["LIVE", "SAAS", "CLIENT"],
-  //   techStack: ["Next.js", "Prisma", "PostgreSQL", "S3", "Cloudflare"],
-  //   architecture: "Row-level security + subdomain routing สำหรับ tenant isolation",
-  //   infrastructure: "Vercel · Cloudflare R2 · Supabase · GitHub Actions",
-  //   challenges: "Media CDN serve ไฟล์ถูก tenant ไม่ leak ข้ามกัน ใช้ signed URL + edge middleware",
-  //   liveUrl: "https://example.com", githubUrl: "https://github.com",
-  //   images: [
-  //     "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=85",
-  //     "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=85",
-  //     "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=1200&q=85",
-  //   ],
-  //   year: 2024, status: "live",
-  // },
-  // {
-  //   id: 5, index: "05",
-  //   title: "CI/CD Pipeline Template",
-  //   subtitle: "Reusable deployment workflow",
-  //   overview: "Reusable GitHub Actions workflow สำหรับ Node.js/Docker ครอบคลุม test, build, deploy และ rollback พร้อม Slack notification",
-  //   tags: ["INTERNAL"],
-  //   techStack: ["GitHub Actions", "Docker", "Shell", "YAML"],
-  //   architecture: "Composite actions แยก reusable steps เป็น modules",
-  //   infrastructure: "GitHub Actions · Docker Hub · Self-hosted Runner",
-  //   challenges: "Deploy time < 3 นาที ด้วย layer caching + parallel job",
-  //   githubUrl: "https://github.com", videoUrl: "https://youtube.com",
-  //   images: [
-  //     "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=85",
-  //   ],
-  //   year: 2023, status: "internal",
-  // },
-  // {
-  //   id: 6, index: "06",
-  //   title: "Realtime Collab Tool",
-  //   subtitle: "Sprint planning with live sync",
-  //   overview: "Web app สำหรับ team sprint planning ร่วมกัน รองรับ voting, timer และ sync state แบบ real-time ด้วย WebSocket",
-  //   tags: ["LIVE", "INTERNAL"],
-  //   techStack: ["React", "TypeScript", "WebSocket", "Node.js", "Redis"],
-  //   architecture: "CRDT-inspired state sync ผ่าน WebSocket rooms บน Redis Pub/Sub",
-  //   infrastructure: "Railway · Cloudflare · GitHub Actions",
-  //   challenges: "State consistency เมื่อ user reconnect กลางคัน ใช้ snapshot + delta replay",
-  //   liveUrl: "https://example.com", githubUrl: "https://github.com", videoUrl: "https://youtube.com",
-  //   images: [
-  //     "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&q=85",
-  //     "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=85",
-  //   ],
-  //   year: 2024, status: "live",
-  // },
-];
-
-const STATUS_DOT = {
-  live: "bg-violet-500",
-  client: "bg-sky-500",
-  internal: "bg-slate-500",
-};
-
-const STATUS_TEXT = {
-  live: "text-violet-600",
-  client: "text-sky-600",
-  internal: "text-slate-600",
-};
-
-const STATUS_BORDER = {
-  live: "border-violet-400/30",
-  client: "border-sky-400/30",
-  internal: "border-slate-400/30",
-};
-
-const STATUS_BG = {
-  live: "bg-violet-500/15",
-  client: "bg-sky-500/15",
-  internal: "bg-slate-500/15",
-};
-
-const STATUS_LABEL = {
-  live: "LIVE",
-  client: "CLIENT",
-  internal: "INTERNAL",
-};
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-const IcoGlobe = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-  </svg>
-);
-const IcoGithub = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
-  </svg>
-);
-const IcoVideo = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" />
-  </svg>
-);
-const IcoChevL = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-const IcoChevR = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
-
-// ─── Image Slider ─────────────────────────────────────────────────────────────
-const ImageSlider = ({
-  images,
-  onLightbox,
-}: {
-  images: string[];
-  onLightbox: (idx: number) => void;
-}) => {
-  const [cur, setCur] = useState(0);
-
-  useEffect(() => { setCur(0); }, [images]);
-
-  const prev = () => setCur((c) => (c - 1 + images.length) % images.length);
-  const next = () => setCur((c) => (c + 1) % images.length);
-
-  return (
-    <div className="relative rounded-xl overflow-hidden border border-white/10 mb-7 group">
-      {/* Image */}
-      <div
-        className="relative aspect-[16/9] overflow-hidden cursor-zoom-in"
-        onClick={() => onLightbox(cur)}
-      >
-        <img
-          key={cur}
-          src={images[cur]}
-          alt={`preview ${cur + 1}`}
-          className="w-full h-full object-cover brightness-75 group-hover:brightness-90 scale-100 group-hover:scale-105 transition-all duration-500"
-        />
-        <span className="absolute bottom-2 right-3 text-[9px] tracking-widest text-white/40 pointer-events-none select-none">
-          ⊕ zoom
-        </span>
-      </div>
-
-      {/* Controls */}
-      {images.length > 1 && (
-        <>
-          {/* Counter */}
-          <span className="absolute top-2 right-3 text-[9px] font-mono tracking-widest text-white/50 bg-black/50 rounded px-2 py-0.5 z-10">
-            {cur + 1} / {images.length}
-          </span>
-
-          {/* Prev */}
-          <button
-            onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 border border-white/15 text-white flex items-center justify-center hover:bg-accent hover:border-accent transition-colors"
-          >
-            <IcoChevL />
-          </button>
-
-          {/* Next */}
-          <button
-            onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 border border-white/15 text-white flex items-center justify-center hover:bg-accent hover:border-accent transition-colors"
-          >
-            <IcoChevR />
-          </button>
-
-          {/* Dots */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => { e.stopPropagation(); setCur(i); }}
-                className={`h-1.5 rounded-full transition-all duration-200 border-none cursor-pointer
-                  ${i === cur ? "w-5 bg-accent" : "w-1.5 bg-white/35"}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
-const Lightbox = ({
-  images,
-  startIdx,
-  onClose,
-}: {
-  images: string[];
-  startIdx: number;
-  onClose: () => void;
-}) => {
-  const [cur, setCur] = useState(startIdx);
-
-  const prev = () => setCur((c) => (c - 1 + images.length) % images.length);
-  const next = () => setCur((c) => (c + 1) % images.length);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [cur]);
-
-  return (
-    <div
-      className="fixed inset-0 z-[9999]
-             bg-black/60 backdrop-blur-lg
-             flex items-center justify-center cursor-zoom-out"
-      onClick={onClose}
-    >
-      <img
-        src={images[cur]}
-        alt={`preview ${cur + 1}`}
-        className="max-w-[88vw] max-h-[86vh] rounded-lg object-contain"
-        onClick={(e) => e.stopPropagation()}
-      />
-
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-6 w-9 h-9 rounded-lg border border-white/15 bg-white/8 text-white text-xl flex items-center justify-center hover:bg-white/15 transition-colors"
-      >
-        ×
-      </button>
-
-      {/* Counter */}
-      <span className="absolute top-6 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-widest text-white/40">
-        {cur + 1} / {images.length} · ESC to close
-      </span>
-
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={(e) => { e.stopPropagation(); prev(); }}
-            className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/15 text-white flex items-center justify-center hover:bg-accent hover:border-accent transition-colors z-10"
-          >
-            <IcoChevL />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); next(); }}
-            className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 border border-white/15 text-white flex items-center justify-center hover:bg-accent hover:border-accent transition-colors z-10"
-          >
-            <IcoChevR />
-          </button>
-
-          {/* Dots */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => { e.stopPropagation(); setCur(i); }}
-                className={`h-1.5 rounded-full border-none cursor-pointer transition-all duration-200
-                  ${i === cur ? "w-6 bg-accent" : "w-1.5 bg-white/30"}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 // ─── Projects Page ────────────────────────────────────────────────────────────
 const ProjectsPage = () => {
@@ -670,7 +234,7 @@ const ProjectsPage = () => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 font-mono text-[12px] tracking-wide px-5 py-3 rounded-lg border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
                     >
-                      <IcoGlobe /> Live Site ↗
+                      <Globe /> Live Site ↗
                     </a>
                   )}
                   {project.githubUrl && (
@@ -684,7 +248,7 @@ const ProjectsPage = () => {
                         color: "var(--text-muted)",
                       }}
                     >
-                      <IcoGithub /> GitHub
+                      <Github size={14} /> GitHub
                     </a>
                   )}
                   {project.videoUrl && (
@@ -698,7 +262,7 @@ const ProjectsPage = () => {
                         color: "var(--text-muted)",
                       }}
                     >
-                      <IcoVideo /> Demo
+                      <Video size={14} /> Demo
                     </a>
                   )}
                 </div>
@@ -721,3 +285,36 @@ const ProjectsPage = () => {
 };
 
 export default ProjectsPage;
+
+
+
+
+const STATUS_DOT = {
+  live: "bg-violet-500",
+  client: "bg-sky-500",
+  internal: "bg-slate-500",
+};
+
+const STATUS_TEXT = {
+  live: "text-violet-600",
+  client: "text-sky-600",
+  internal: "text-slate-600",
+};
+
+const STATUS_BORDER = {
+  live: "border-violet-400/30",
+  client: "border-sky-400/30",
+  internal: "border-slate-400/30",
+};
+
+const STATUS_BG = {
+  live: "bg-violet-500/15",
+  client: "bg-sky-500/15",
+  internal: "bg-slate-500/15",
+};
+
+const STATUS_LABEL = {
+  live: "LIVE",
+  client: "CLIENT",
+  internal: "INTERNAL",
+};
