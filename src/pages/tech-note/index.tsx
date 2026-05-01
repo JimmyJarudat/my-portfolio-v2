@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { NOTES } from "./data";
 
+import { getNotes } from "@/services/notesService";
+import { Pagination } from "@/components/Pagination";
 
-
-
+const NOTES_PER_PAGE = 10;
 
 // ─── Tag colors ───────────────────────────────────────────────────────────────
 const TAG_COLORS: Record<string, string> = {
@@ -166,16 +166,98 @@ const NoteDetail = ({
   </div>
 );
 
+
+
+// ─── helpers: read / write ?note=slug in the URL ─────────────────────────────
+const getNoteSlugFromURL = () =>
+  new URLSearchParams(window.location.search).get("note") ?? null;
+
 // ─── Tech Notes Page ──────────────────────────────────────────────────────────
 const TechNotesPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
+
+  // slug of the currently-open note (drives URL + view)
+  const [activeSlug, setActiveSlug] = useState<string | null>(getNoteSlugFromURL);
+
+  // remember scroll position + page before opening a note
+  const savedScroll = useRef(0);
+  const savedPage   = useRef(1);
 
   const border = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)";
   const cardBg = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)";
 
-  const selectedNote = NOTES.find((n) => n.id === selectedId) ?? null;
+  const selectedNote = activeSlug ? notes.find((n) => n.slug === activeSlug) ?? null : null;
+
+  // ── Filter by search query (title + subtitle + tags) ──
+  const q = search.trim().toLowerCase();
+  const filteredNotes = q
+    ? notes.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.subtitle.toLowerCase().includes(q) ||
+          n.tags.some((t) => t.toLowerCase().includes(q))
+      )
+    : notes;
+
+  const totalPages = Math.ceil(filteredNotes.length / NOTES_PER_PAGE);
+  const paginatedNotes = filteredNotes.slice(
+    (currentPage - 1) * NOTES_PER_PAGE,
+    currentPage * NOTES_PER_PAGE
+  );
+
+  // ── Load notes ──
+  useEffect(() => {
+    getNotes().then(setNotes).catch(console.error);
+  }, []);
+
+  // ── Sync URL → state when user hits browser Back/Forward ──
+  useEffect(() => {
+    const onPop = () => {
+      const slug = getNoteSlugFromURL();
+      setActiveSlug(slug);
+      if (!slug) {
+        setCurrentPage(savedPage.current);
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: savedScroll.current, behavior: "instant" });
+        });
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Reset to page 1 whenever search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // ── Open a note ──
+  const openNote = (note: Note) => {
+    savedScroll.current = window.scrollY;
+    savedPage.current   = currentPage;
+    setActiveSlug(note.slug);
+    window.history.pushState({ slug: note.slug }, "", `${window.location.pathname}?note=${note.slug}`);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  // ── Close / back button inside the article ──
+  const closeNote = () => {
+    setActiveSlug(null);
+    window.history.pushState({}, "", window.location.pathname);
+    setCurrentPage(savedPage.current);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScroll.current, behavior: "instant" });
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <section className="min-h-full w-full">
@@ -196,87 +278,158 @@ const TechNotesPage = () => {
             note={selectedNote}
             border={border}
             cardBg={cardBg}
-            onBack={() => setSelectedId(null)}
+            onBack={closeNote}
           />
         ) : (
           <>
             {/* ── Intro ── */}
             <p
-              className="font-mono text-[13px] leading-relaxed mb-10 max-w-xl"
+              className="font-mono text-[13px] leading-relaxed mb-8 max-w-xl"
               style={{ color: "var(--text-muted)" }}
             >
               บันทึกสิ่งที่เรียนรู้จากการทำงานจริง — ปัญหาที่เจอ วิธีที่แก้ และสิ่งที่อยากจำไว้
             </p>
 
-            {/* ── Note list: single column ── */}
-            <div className="flex flex-col gap-4">
-              {NOTES.map((note) => (
-                <div
-                  key={note.id}
-                  onClick={() => setSelectedId(note.id)}
-                  className="group p-5 rounded-xl border cursor-pointer transition-all duration-150 hover:border-accent/40"
-                  style={{ borderColor: border, background: cardBg }}
+            {/* ── Search box ── */}
+            <div className="relative mb-6 max-w-sm">
+              <span
+                className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-[12px] pointer-events-none select-none"
+                style={{ color: "var(--text-muted)" }}
+              >
+                ⌕
+              </span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ค้นหา title, tag…"
+                className="w-full font-mono text-[12px] pl-8 pr-8 py-2 rounded-lg border bg-transparent outline-none transition-all duration-150 focus:border-accent/60 placeholder:opacity-40"
+                style={{
+                  borderColor: border,
+                  color: "var(--text)",
+                }}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[11px] transition-colors hover:text-accent"
+                  style={{ color: "var(--text-muted)" }}
                 >
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {note.tags.map((t) => (
-                      <span
-                        key={t}
-                        className={`font-mono text-[9px] tracking-widest uppercase px-2 py-0.5 rounded border ${getTagClass(t)}`}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Title + Hero thumbnail row */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className="font-bold text-[15px] mb-1.5 group-hover:text-accent transition-colors leading-snug"
-                        style={{ color: "var(--text)" }}
-                      >
-                        {note.title}
-                      </h3>
-                      <p
-                        className="font-mono text-[12px] leading-relaxed mb-4"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {note.subtitle}
-                      </p>
-                    </div>
-
-                    {/* Thumbnail */}
-                    {note.heroImage && (
-                      <div
-                        className="hidden sm:block flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border"
-                        style={{ borderColor: border }}
-                      >
-                        <img
-                          src={note.heroImage}
-                          alt={note.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="font-mono text-[10px] tracking-widest uppercase"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {note.date} · {note.readTime} read
-                    </span>
-                    <span className="font-mono text-[11px] text-accent opacity-0 group-hover:opacity-100 transition-opacity">
-                      อ่านบทความ →
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  ✕
+                </button>
+              )}
             </div>
+
+            {/* ── Note count ── */}
+            {notes.length > 0 && (
+              <p
+                className="font-mono text-[10px] tracking-widest uppercase mb-6"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {q
+                  ? `พบ ${filteredNotes.length} จาก ${notes.length} notes`
+                  : `${notes.length} notes · หน้า ${currentPage} / ${totalPages}`}
+              </p>
+            )}
+
+            {/* ── Note list ── */}
+            {filteredNotes.length === 0 ? (
+              <p
+                className="font-mono text-[13px] py-16 text-center"
+                style={{ color: "var(--text-muted)" }}
+              >
+                ไม่พบ note ที่ตรงกับ &ldquo;{search}&rdquo;
+              </p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {paginatedNotes.map((note, idx) => {
+                  const globalIndex = (currentPage - 1) * NOTES_PER_PAGE + idx + 1;
+                  return (
+                    <div
+                      key={note.id}
+                      onClick={() => openNote(note)}
+                      className="group p-5 rounded-xl border cursor-pointer transition-all duration-150 hover:border-accent/40"
+                      style={{ borderColor: border, background: cardBg }}
+                    >
+                      {/* Index + Tags row */}
+                      <div className="flex items-center gap-3 mb-3">
+                        <span
+                          className="font-mono text-[10px] tracking-widest tabular-nums text-accent opacity-50 select-none"
+                        >
+                          {String(globalIndex).padStart(2, "0")}
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {note.tags.map((t) => (
+                            <span
+                              key={t}
+                              className={`font-mono text-[9px] tracking-widest uppercase px-2 py-0.5 rounded border ${getTagClass(t)}`}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Title + Hero thumbnail row */}
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className="font-bold text-[15px] mb-1.5 group-hover:text-accent transition-colors leading-snug"
+                            style={{ color: "var(--text)" }}
+                          >
+                            {note.title}
+                          </h3>
+                          <p
+                            className="font-mono text-[12px] leading-relaxed mb-4"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            {note.subtitle}
+                          </p>
+                        </div>
+
+                        {/* Thumbnail */}
+                        {note.heroImage && (
+                          <div
+                            className="hidden sm:block flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border"
+                            style={{ borderColor: border }}
+                          >
+                            <img
+                              src={note.heroImage}
+                              alt={note.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="font-mono text-[10px] tracking-widest uppercase"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          {note.date} · {note.readTime} read
+                        </span>
+                        <span className="font-mono text-[11px] text-accent opacity-0 group-hover:opacity-100 transition-opacity">
+                          อ่านบทความ →
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── Pagination (hide when searching) ── */}
+            {!q && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                border={border}
+              />
+            )}
           </>
         )}
       </div>

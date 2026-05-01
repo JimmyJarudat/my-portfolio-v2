@@ -2,9 +2,16 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "@/layout/Header";
+import { useEffect } from "react";
+import { trackPageView } from "@/services/trackingService";
 
 const Layout = () => {
   const location = useLocation();
+
+  // ── Track every unique path visit (once per session per path) ──
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   return (
     <>

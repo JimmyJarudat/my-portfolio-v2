@@ -5,4 +5,5 @@ export const th = {
   certificate: "ใบรับรอง",
   about: "เกี่ยวกับ",
   blog: "บทความ",
+  guides: "คู่มือ",
 };
