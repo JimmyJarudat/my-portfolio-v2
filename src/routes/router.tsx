@@ -6,6 +6,7 @@ import ProjectPage    from "@/pages/project";
 import AboutPage      from "@/pages/about";
 import ResumePage     from "@/pages/resume";
 import TechNotePage   from "@/pages/tech-note";
+import GuidesPage     from "@/pages/guides";
 import AdminLoginPage from "@/pages/auth/login";
 import AdminPage      from "@/pages/admin";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -46,6 +47,14 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { index: true, element: <TechNotePage /> },
+    ],
+  },
+
+  {
+    path: "/guides",
+    element: <Layout />,
+    children: [
+      { index: true, element: <GuidesPage /> },
     ],
   },
 

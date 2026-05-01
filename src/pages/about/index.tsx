@@ -56,7 +56,7 @@ const AboutPage = () => {
                         <span className="absolute top-2.5 left-3 font-mono text-[8px] tracking-wider text-black/15 dark:text-white/15">JC / 001</span>
                         <span className="absolute bottom-2.5 right-3 font-mono text-[8px] tracking-wider text-black/15 dark:text-white/15">2025</span>
 
-                        <img src="/images/bout.jpg" className="w-full h-full object-cover absolute inset-0" alt="Jarudat Chaikuad" />
+                        <img src="https://rvynprnlbpwbnjamexkz.supabase.co/storage/v1/object/public/portfolio/About.jpg" className="w-full h-full object-cover absolute inset-0" alt="Jarudat Chaikuad" />
                     </div>
 
                     {/* ── Right: bio + contact ── */}

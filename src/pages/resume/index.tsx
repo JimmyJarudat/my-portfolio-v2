@@ -51,7 +51,7 @@ const EDUCATION = [
     major: "Computer Engineering",
     gpa: "2.76",
     year: "2022",
-    logo: "/images/kmitl.png",
+    logo: "https://rvynprnlbpwbnjamexkz.supabase.co/storage/v1/object/public/portfolio/kmitl.png",
   },
   {
     level: "Vocational Certificate",
@@ -60,7 +60,7 @@ const EDUCATION = [
     major: "Electronics",
     gpa: "3.55",
     year: "2017",
-    logo: "/images/Na.png",
+    logo: "https://rvynprnlbpwbnjamexkz.supabase.co/storage/v1/object/public/portfolio/Na.png",
   },
 ];
 

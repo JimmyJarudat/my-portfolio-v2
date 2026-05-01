@@ -6,7 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── ข้อมูล ──────────────────────────────────────────────
-const PHOTO_PATH = "/images/Hero_Jimmy.png";
+const PHOTO_PATH = "https://rvynprnlbpwbnjamexkz.supabase.co/storage/v1/object/public/portfolio/Hero_Jimmy.png";
 const CV_PATH    = "/pdf/CV.pdf";
 const CV_NAME    = "CV-Jimmy.pdf";
 
