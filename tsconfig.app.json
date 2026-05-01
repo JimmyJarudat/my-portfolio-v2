@@ -8,8 +8,10 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    
-    // ปิดการตรวจสอบทั้งหมด
+
+    "types": ["vite/client"],
+    "ignoreDeprecations": "6.0",
+
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -17,10 +19,10 @@
     "noUncheckedSideEffectImports": false,
     "allowJs": true,
     "checkJs": false,
-    
+
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
-  },
+  }
 }

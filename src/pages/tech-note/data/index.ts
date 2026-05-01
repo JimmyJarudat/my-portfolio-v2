@@ -1592,4 +1592,2265 @@ export const NOTES: Note[] = [
             },
         ],
     },
+
+    {
+        id: 48,
+        slug: "windows-server-permission-inheritance-break",
+        title: "NTFS Permission เพี้ยนเพราะ inheritance ถูกตัด",
+        subtitle: "ให้สิทธิ์แล้ว user ยังเข้าไม่ได้ — เพราะ folder ไม่ inherit permission จาก parent",
+        tags: ["Windows Server", "Security", "File Server"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ตั้ง permission ให้ user แล้ว แต่ยัง access folder ไม่ได้`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `Folder มีการ Disable inheritance ทำให้ permission จาก parent ไม่ถูก apply`,
+            },
+            {
+                heading: "Fix",
+                body: `Right-click folder → Properties → Security → Advanced\n\nEnable inheritance หรือ add permission ใหม่ให้ครบ`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Permission issue ต้องดู inheritance เสมอ ไม่ใช่ดูแค่ ACL ปัจจุบัน`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 49,
+        slug: "dns-internal-vs-external-resolution",
+        title: "DNS resolve ได้แต่ ping ไม่ได้ เพราะ internal DNS ชี้ผิด",
+        subtitle: "nslookup ได้ IP แต่เป็น IP ภายในที่ unreachable",
+        tags: ["DNS", "Networking"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `nslookup domain ได้ IP แต่ ping ไม่ได้`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `Internal DNS record ชี้ไป IP private ที่ access ไม่ได้จาก client`,
+            },
+            {
+                heading: "Fix",
+                body: `ตรวจ DNS zone และ split-brain DNS configuration`,
+            },
+            {
+                heading: "Key Learning",
+                body: `DNS ถูกไม่ได้แปลว่า network ใช้งานได้ — ต้องดูว่า IP ที่ resolve ถูก route ได้จริง`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 50,
+        slug: "ad-account-lockout-root-cause",
+        title: "Account lockout ซ้ำๆ เพราะ service ใช้ password เก่า",
+        subtitle: "user เปลี่ยน password แล้ว แต่ account ยังโดน lock ทุก 5 นาที",
+        tags: ["Active Directory", "Security"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Account ถูก lock ซ้ำๆ แม้ user login ถูก`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `มี service, scheduled task หรือ mapped drive ที่ยังใช้ password เก่า`,
+            },
+            {
+                heading: "วิธีตรวจสอบ",
+                body: `Event Viewer → Security → Event ID 4740`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Account lock ไม่ใช่ user พิมพ์ผิดเสมอ — ต้อง trace source ของ request`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 51,
+        slug: "vpn-connected-but-no-internet-route",
+        title: "VPN ต่อได้แต่ใช้งานไม่ได้ เพราะ route ไม่ถูก",
+        subtitle: "connected แต่เข้า resource ไม่ได้ — เพราะ missing route",
+        tags: ["VPN", "Networking"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `VPN connected แต่ ping network ภายในไม่ได้`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `ไม่มี route ไป subnet ภายใน หรือ split tunnel config ผิด`,
+            },
+            {
+                heading: "Fix",
+                body: `ตรวจ routing table (route print / ip route)\nเพิ่ม route หรือแก้ VPN config`,
+            },
+            {
+                heading: "Key Learning",
+                body: `VPN connect ≠ network ใช้งานได้ ต้องตรวจ route เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 52,
+        slug: "sql-server-tempdb-full-impact",
+        title: "TempDB เต็มทำให้ query ทั้งระบบช้า",
+        subtitle: "ระบบช้าทั้ง server แต่ CPU/Memory ปกติ — เพราะ tempdb เต็ม",
+        tags: ["SQL Server", "Performance"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Query ช้าทั้งระบบ`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `TempDB เต็มหรือ auto-grow ช้า`,
+            },
+            {
+                heading: "Fix",
+                body: `เพิ่ม size tempdb และตั้ง auto-growth ที่เหมาะสม`,
+            },
+            {
+                heading: "Key Learning",
+                body: `TempDB คือ critical component ของ SQL Server — ต้อง monitor เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 53,
+        slug: "firewall-block-port-but-ping-ok",
+        title: "Ping ได้แต่เข้า service ไม่ได้ เพราะ firewall block port",
+        subtitle: "network ดูเหมือนปกติ แต่ service ใช้งานไม่ได้",
+        tags: ["Firewall", "Networking"],
+        date: "2026",
+        readTime: "2 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Ping ได้ แต่เข้าเว็บ/DB ไม่ได้`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `Firewall block port เช่น 80, 443, 1433`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Ping ใช้ ICMP — ไม่เกี่ยวกับ TCP port`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 54,
+        slug: "domain-gpo-not-applied",
+        title: "GPO ไม่ apply เพราะ client ไม่ได้ contact DC",
+        subtitle: "ตั้ง policy แล้วไม่ทำงาน — เพราะเครื่องไม่ได้ sync กับ Domain Controller",
+        tags: ["Active Directory", "GPO"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `GPO ไม่ apply`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `Client ติดต่อ DC ไม่ได้ หรือ DNS ชี้ผิด`,
+            },
+            {
+                heading: "Fix",
+                body: `gpupdate /force\ngpresult /r`,
+            },
+            {
+                heading: "Key Learning",
+                body: `GPO พึ่งพา DNS + DC — ถ้า 2 อย่างนี้พัง policy จะไม่ทำงาน`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 55,
+        slug: "disk-full-service-crash",
+        title: "Disk เต็มทำให้ service ล่มโดยไม่แจ้งชัดเจน",
+        subtitle: "service down แต่ไม่มี error — เพราะ write ไม่ได้",
+        tags: ["Linux", "Windows", "Monitoring"],
+        date: "2026",
+        readTime: "2 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Service ล่มแบบไม่มี error ชัดเจน`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `Disk เต็ม ทำให้ write log หรือ temp file ไม่ได้`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Disk usage เป็น metric ที่ต้อง monitor ตลอด`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 56,
+        slug: "time-sync-ntp-critical-system",
+        title: "Time ไม่ตรงทำให้ระบบ auth และ log เพี้ยน",
+        subtitle: "Login ไม่ได้ / log mismatch — เพราะ time server ไม่ sync",
+        tags: ["NTP", "Security"],
+        date: "2026",
+        readTime: "2 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Login fail หรือ log timestamp ไม่ตรง`,
+            },
+            {
+                heading: "สาเหตุ",
+                body: `เครื่องไม่ sync เวลา (NTP)`,
+            },
+            {
+                heading: "Fix",
+                body: `ตั้ง NTP server และ sync เวลา`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Time เป็น dependency สำคัญของ security และ system integrity`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 57,
+        slug: "incident-no-backup-data-loss-root-cause",
+        title: "Incident จริง: ข้อมูลหายทั้งระบบเพราะ 'คิดว่ามี backup'",
+        subtitle: "Backup job run ทุกวัน แต่ restore ไม่ได้ — เพราะไม่เคย test recovery",
+        tags: ["Backup", "Incident", "Disaster Recovery"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "สถานการณ์จริง",
+                body: `User ลบข้อมูลสำคัญใน network share\nIT มั่นใจว่ามี backup → เริ่ม restore\n\nแต่ restore ไม่ได้ — backup file เสีย และบาง job ไม่เคย run สำเร็จ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `- ไม่มีการ test restore เลย\n- Backup success = แค่ job ไม่ error ไม่ใช่ data usable\n- ไม่มี monitoring alert เมื่อ backup fail`,
+            },
+            {
+                heading: "Impact",
+                body: `ข้อมูล production หายถาวร\nต้องให้ user re-create เอกสารเอง`,
+            },
+            {
+                heading: "Fix (ระดับองค์กร)",
+                body: `1. ทำ Restore Test ทุกเดือน (mandatory)\n2. แยก Backup vs Restore validation\n3. มี alert ถ้า backup fail\n4. ทำ DR drill (simulate disaster)`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Backup ที่ไม่เคย restore = ไม่มีค่า\n\nองค์กรที่ mature จะวัด "Restore Success Rate" ไม่ใช่ Backup Success`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 58,
+        slug: "single-point-of-failure-network-design",
+        title: "Network ล่มทั้งองค์กรเพราะ Single Point of Failure",
+        subtitle: "Router ตัวเดียวพัง = ทุกระบบหยุด แม้ server ยังปกติ",
+        tags: ["Networking", "Architecture", "Incident"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `Internet และระบบภายในล่มทั้งบริษัท\nServer ยังทำงาน แต่ user ใช้งานไม่ได้เลย`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Router มีแค่ตัวเดียว (Single Point of Failure)\nไม่มี failover`,
+            },
+            {
+                heading: "Impact",
+                body: `- ระบบ ERP ใช้งานไม่ได้\n- user ทั้งองค์กรหยุดงาน`,
+            },
+            {
+                heading: "Fix (ระดับ architecture)",
+                body: `- ใช้ Dual WAN + Load Balance\n- ทำ Router redundancy (VRRP / Failover)\n- แยก network critical ออกจาก internet`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Infrastructure ที่ไม่มี redundancy = ไม่ใช่ production-grade\n\nDowntime ไม่ได้เกิดจาก bug เสมอ แต่เกิดจาก design`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 59,
+        slug: "no-monitoring-no-visibility-problem",
+        title: "ไม่มี Monitoring = แก้ปัญหาช้า 10 เท่า",
+        subtitle: "รู้ปัญหาจาก user complain ไม่ใช่ system alert",
+        tags: ["Monitoring", "Operations"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `User แจ้งระบบช้า\nIT ไม่มี metric ย้อนหลังดู`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่มี monitoring system (CPU, disk, network, service)\nหรือมีแต่ไม่ได้ใช้งานจริง`,
+            },
+            {
+                heading: "Impact",
+                body: `- แก้ปัญหาจาก "เดา"\n- ใช้เวลานานมาก`,
+            },
+            {
+                heading: "Fix",
+                body: `- ติดตั้ง monitoring (LibreNMS, Prometheus)\n- ตั้ง alert threshold\n- เก็บ historical data`,
+            },
+            {
+                heading: "Key Learning",
+                body: `You can't fix what you can't see\n\nMonitoring คือ foundation ของ operations`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 60,
+        slug: "human-error-production-impact",
+        title: "Human Error: UPDATE ผิด WHERE ทำข้อมูล production พัง",
+        subtitle: "คำสั่งเดียวกระทบทั้งระบบ เพราะไม่มี safeguard",
+        tags: ["SQL Server", "Incident"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `รัน UPDATE โดยลืม WHERE condition\nข้อมูลทั้ง table ถูกแก้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `- ไม่มี transaction\n- ไม่มี approval process\n- ไม่มี rollback plan`,
+            },
+            {
+                heading: "Impact",
+                body: `ข้อมูลเสียทั้งระบบ ต้อง restore`,
+            },
+            {
+                heading: "Fix",
+                body: `- ใช้ BEGIN TRANSACTION ทุกครั้ง\n- SELECT ก่อน UPDATE\n- จำกัด permission (ไม่ให้แก้ production ตรง)`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Production system ต้องออกแบบให้ "ป้องกันคนพลาด" ไม่ใช่หวังว่า "คนจะไม่พลาด"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 61,
+        slug: "security-incident-no-access-control",
+        title: "Security Incident: ทุกคนเข้าถึงทุก folder เพราะ permission ไม่แยก",
+        subtitle: "Data exposure ไม่ใช่ hack แต่เกิดจาก config ผิด",
+        tags: ["Security", "Compliance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `User เข้าถึงข้อมูลฝ่ายอื่นได้ทั้งหมด`,
+            },
+            {
+                heading: "Root Cause",
+                body: `- ใช้ Everyone full control\n- ไม่มี role-based access`,
+            },
+            {
+                heading: "Impact",
+                body: `เสี่ยง data leakage และ audit fail`,
+            },
+            {
+                heading: "Fix",
+                body: `- ใช้ RBAC (Role-Based Access Control)\n- แยก folder ตาม department\n- audit permission`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Security problem ส่วนใหญ่ไม่ได้มาจาก hacker แต่มาจาก config ภายใน`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 62,
+        slug: "no-documentation-risk",
+        title: "ไม่มี Documentation = Risk สูงระดับองค์กร",
+        subtitle: "ระบบทำงานได้ แต่ไม่มีใครรู้ว่ามันทำงานยังไง",
+        tags: ["Process", "Management"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `ระบบสำคัญมีแค่คนเดียวที่รู้ config`,
+            },
+            {
+                heading: "Impact",
+                body: `- ถ้าคนนั้นลาออก → ระบบเสี่ยงล่ม\n- แก้ปัญหาช้า`,
+            },
+            {
+                heading: "Fix",
+                body: `- ทำ system documentation\n- runbook\n- knowledge transfer`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ระบบที่ไม่มี documentation = technical debt ระดับองค์กร`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 63,
+        slug: "capacity-planning-failure",
+        title: "Capacity Planning พลาดทำให้ระบบล่มโดยไม่คาดคิด",
+        subtitle: "Disk เต็ม / CPU เต็ม เพราะไม่เคย forecast",
+        tags: ["Planning", "Infrastructure"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `ระบบล่มเพราะ resource เต็ม`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่มี capacity planning`,
+            },
+            {
+                heading: "Fix",
+                body: `- ทำ trend analysis\n- วางแผนล่วงหน้า`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ระบบ production ต้องคิด "อนาคต" ไม่ใช่แค่ "ปัจจุบัน"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 64,
+        slug: "incident-response-no-process",
+        title: "Incident Response ไม่มี process ทำให้ downtime นานขึ้น",
+        subtitle: "ทุกคนแก้ปัญหาเอง ไม่มี coordination",
+        tags: ["Incident", "Management"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `ระบบล่ม แต่ทีมทำงานไม่เป็นระบบ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่มี incident response plan`,
+            },
+            {
+                heading: "Fix",
+                body: `- define role (incident commander)\n- communication plan\n- post-mortem`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Incident ที่ดีไม่ใช่ "ไม่มี downtime"\nแต่คือ "recover ได้เร็ว"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 65,
+        slug: "backup-without-offsite-risk",
+        title: "Backup อยู่ที่เดียวกับ production = เสี่ยงเท่ากัน",
+        subtitle: "NAS เสีย = backup หายพร้อม data",
+        tags: ["Backup", "Disaster Recovery"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Backup อยู่ NAS เดียวกับระบบ`,
+            },
+            {
+                heading: "Risk",
+                body: `ไฟไหม้ / ransomware → หายหมด`,
+            },
+            {
+                heading: "Fix",
+                body: `- offsite backup\n- cloud backup`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Backup ต้องอยู่คนละ location เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 66,
+        slug: "overengineering-vs-practical-solution",
+        title: "Overengineering: ระบบซับซ้อนเกินจำเป็นทำให้ดูแลยาก",
+        subtitle: "เทคโนโลยีเยอะ ≠ ระบบดี",
+        tags: ["Architecture", "Engineering"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ระบบมีหลาย layer เกินจำเป็น`,
+            },
+            {
+                heading: "Impact",
+                body: `debug ยาก / maintain ยาก`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Simple system > Complex system\n\nความง่ายคือความแข็งแรง`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 67,
+        slug: "it-as-cost-center-vs-business-enabler",
+        title: "IT ไม่ใช่ Cost Center แต่เป็น Business Enabler",
+        subtitle: "องค์กรที่มอง IT เป็นแค่ค่าใช้จ่าย จะเจอ downtime แพงกว่าเสมอ",
+        tags: ["Management", "Strategy"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "Insight",
+                body: `หลายองค์กรลดงบ IT เพื่อประหยัดต้นทุน\nแต่ผลลัพธ์คือ downtime, data loss, security risk`,
+            },
+            {
+                heading: "Reality",
+                body: `Downtime 1 ชั่วโมง อาจเสียมากกว่าค่า IT ทั้งปี`,
+            },
+            {
+                heading: "Key Learning",
+                body: `IT ที่ดีไม่ใช่แค่ "ทำให้ระบบใช้ได้"\nแต่ต้อง "ทำให้ธุรกิจเดินต่อได้โดยไม่สะดุด"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 68,
+        slug: "no-root-cause-analysis-repeat-incident",
+        title: "Incident เกิดซ้ำเพราะไม่ทำ Root Cause Analysis",
+        subtitle: "แก้ปลายเหตุเร็ว แต่ปัญหากลับมาอีก",
+        tags: ["Incident", "Process"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ระบบล่ม → restart → ใช้งานได้ → จบ\nแต่ล่มอีกใน 2 วัน`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่เคยวิเคราะห์ root cause จริง`,
+            },
+            {
+                heading: "Fix",
+                body: `ทำ post-mortem ทุก incident:\n- What happened\n- Why it happened\n- How to prevent`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Fix ที่ไม่แก้ root cause = delay ของปัญหา`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 69,
+        slug: "lack-of-change-management-risk",
+        title: "ไม่มี Change Management = Production เสี่ยงตลอดเวลา",
+        subtitle: "แก้ config เล็กๆ แต่กระทบทั้งระบบ",
+        tags: ["Process", "ITIL"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `แก้ config เล็กน้อย → ระบบล่ม`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่มี change approval / rollback plan`,
+            },
+            {
+                heading: "Fix",
+                body: `- Change request\n- Approval\n- Test ก่อน deploy\n- Rollback plan`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Production change ต้อง "ควบคุม" ไม่ใช่ "ลองดู"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 70,
+        slug: "knowledge-silo-risk",
+        title: "Knowledge Silo: ความรู้กระจุกตัว = ความเสี่ยงองค์กร",
+        subtitle: "มีคนเดียวรู้ระบบ = Single Point of Failure",
+        tags: ["Management", "Risk"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `มี engineer คนเดียวรู้ระบบ critical`,
+            },
+            {
+                heading: "Impact",
+                body: `ลาออก = system risk`,
+            },
+            {
+                heading: "Fix",
+                body: `- Documentation\n- Cross training\n- Knowledge sharing`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Knowledge ต้องกระจาย ไม่ใช่เก็บไว้ที่คนเดียว`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 71,
+        slug: "no-sla-no-expectation",
+        title: "ไม่มี SLA ทำให้ expectation ไม่ตรงกัน",
+        subtitle: "User คิดว่าระบบต้องไม่ล่ม แต่ IT ไม่มี commitment",
+        tags: ["Management", "Service"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `User คาดหวัง uptime 100%`,
+            },
+            {
+                heading: "Reality",
+                body: `ไม่มี system ไหน 100% uptime`,
+            },
+            {
+                heading: "Fix",
+                body: `กำหนด SLA เช่น 99.9% uptime`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Expectation ต้อง define ไม่งั้น conflict แน่นอน`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 72,
+        slug: "alert-fatigue-problem",
+        title: "Alert เยอะเกินไปทำให้ไม่สนใจ alert",
+        subtitle: "สุดท้าย alert จริงก็ถูก ignore",
+        tags: ["Monitoring", "Operations"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Alert เด้งทั้งวัน`,
+            },
+            {
+                heading: "Impact",
+                body: `ทีมเริ่ม ignore alert`,
+            },
+            {
+                heading: "Fix",
+                body: `- ปรับ threshold\n- ลด noise\n- focus critical alert`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Better no alert than useless alert`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 73,
+        slug: "technical-debt-accumulation",
+        title: "Technical Debt: หนี้ที่มองไม่เห็นแต่ส่งผลระยะยาว",
+        subtitle: "ระบบยังทำงานได้ แต่เริ่มช้าและพังง่าย",
+        tags: ["Engineering", "Architecture"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ระบบ patch เพิ่มเรื่อยๆ ไม่มี refactor`,
+            },
+            {
+                heading: "Impact",
+                body: `- debug ยาก\n- change ยาก`,
+            },
+            {
+                heading: "Fix",
+                body: `- refactor\n- redesign\n- cleanup`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Technical debt ไม่เคยหายไปเอง\nมันจะ "คิดดอกเบี้ย" เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 74,
+        slug: "lack-of-automation-risk",
+        title: "Manual Process = Error Rate สูง",
+        subtitle: "ทำมือซ้ำๆ = เสี่ยงผิดพลาด",
+        tags: ["Automation", "DevOps"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ทำ task ซ้ำๆ ด้วยมือ`,
+            },
+            {
+                heading: "Impact",
+                body: `เกิด human error`,
+            },
+            {
+                heading: "Fix",
+                body: `automation script / pipeline`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Anything manual → eventually fail`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 75,
+        slug: "no-logging-no-debugging",
+        title: "ไม่มี Logging = Debug ไม่ได้",
+        subtitle: "ระบบพังแต่ไม่มีข้อมูลว่าเกิดอะไรขึ้น",
+        tags: ["Logging", "Debugging"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `Error เกิด แต่ไม่มี log`,
+            },
+            {
+                heading: "Impact",
+                body: `แก้ปัญหาช้ามาก`,
+            },
+            {
+                heading: "Fix",
+                body: `- structured logging\n- central log`,
+            },
+            {
+                heading: "Key Learning",
+                body: `No logs = no truth`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 76,
+        slug: "system-without-testing-risk",
+        title: "Deploy โดยไม่ test = gamble กับ production",
+        subtitle: "code ทำงานใน dev แต่พังใน production",
+        tags: ["Testing", "DevOps"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `deploy แล้วพัง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ไม่มี test environment`,
+            },
+            {
+                heading: "Fix",
+                body: `- staging environment\n- automated test`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Test ไม่ได้ทำให้มั่นใจ 100%\nแต่ไม่ test = เสี่ยง 100%`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 77,
+        slug: "ransomware-incident-no-immutable-backup",
+        title: "Ransomware ลบทั้ง production + backup เพราะไม่มี Immutable",
+        subtitle: "มี backup แต่โดนเข้ารหัสไปพร้อมกัน — เพราะอยู่ domain เดียวกัน",
+        tags: ["Security", "Backup", "Incident"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "สถานการณ์จริง",
+                body: `Ransomware เข้าเครื่อง user → privilege escalate → เข้า file server และ NAS\n\nข้อมูล production และ backup ถูก encrypt ทั้งหมด`,
+            },
+            {
+                heading: "Root Cause",
+                body: `- Backup อยู่ใน network เดียวกัน\n- ไม่มี immutable / offline backup\n- ใช้ credential เดียวกัน`,
+            },
+            {
+                heading: "Fix (ระดับองค์กร)",
+                body: `- Immutable backup (WORM / Object Lock)\n- Offline backup (air-gap)\n- แยก credential`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Backup ที่ attacker ลบได้ = ไม่ใช่ backup\n\nต้อง assume ว่า attacker "เข้าถึง network ได้แล้ว"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 78,
+        slug: "privilege-creep-security-risk",
+        title: "Privilege Creep: สิทธิ์สะสมจนกลายเป็นช่องโหว่",
+        subtitle: "user ได้สิทธิ์เพิ่มเรื่อยๆ จนเข้าถึงข้อมูลที่ไม่ควร",
+        tags: ["Security", "Compliance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `user ย้ายตำแหน่ง แต่สิทธิ์เดิมยังอยู่`,
+            },
+            {
+                heading: "Impact",
+                body: `เข้าถึงข้อมูล sensitive ได้`,
+            },
+            {
+                heading: "Fix",
+                body: `- periodic access review\n- least privilege`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Security ไม่ใช่แค่ "ให้สิทธิ์" แต่ต้อง "เอาสิทธิ์ออก" ด้วย`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 79,
+        slug: "shadow-it-risk",
+        title: "Shadow IT: user ใช้ระบบนอกโดยไม่ผ่าน IT",
+        subtitle: "ข้อมูลบริษัทไปอยู่ใน Google Drive ส่วนตัว",
+        tags: ["Security", "Governance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "สถานการณ์",
+                body: `user ใช้ cloud storage ส่วนตัวแทนระบบองค์กร`,
+            },
+            {
+                heading: "Impact",
+                body: `- data leak\n- ไม่มี control`,
+            },
+            {
+                heading: "Fix",
+                body: `- provide official tools\n- enforce policy`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ถ้า IT ให้เครื่องมือไม่พอ user จะหาทางเอง`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 80,
+        slug: "over-reliance-on-single-vendor",
+        title: "Vendor Lock-in ทำให้องค์กรเสี่ยง",
+        subtitle: "ระบบ critical พึ่ง vendor เดียว → downtime ยาว",
+        tags: ["Strategy", "Architecture"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `ระบบทั้งหมดอยู่บน vendor เดียว`,
+            },
+            {
+                heading: "Impact",
+                body: `vendor ล่ม → ทุกอย่างล่ม`,
+            },
+            {
+                heading: "Fix",
+                body: `- multi-vendor\n- exit strategy`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Design ต้องคิด worst-case เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 81,
+        slug: "no-audit-trail-risk",
+        title: "ไม่มี Audit Trail = ตรวจสอบย้อนหลังไม่ได้",
+        subtitle: "ข้อมูลถูกแก้ แต่ไม่รู้ว่าใครทำ",
+        tags: ["Security", "Compliance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `data เปลี่ยน แต่ trace ไม่ได้`,
+            },
+            {
+                heading: "Impact",
+                body: `audit fail / trust loss`,
+            },
+            {
+                heading: "Fix",
+                body: `- enable audit log\n- log user action`,
+            },
+            {
+                heading: "Key Learning",
+                body: `System ที่ไม่มี audit = ไม่มี accountability`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 82,
+        slug: "backup-window-not-meeting-rpo",
+        title: "Backup window ไม่ตรง RPO ทำให้ data loss เกินรับได้",
+        subtitle: "backup วันละครั้ง แต่ธุรกิจต้องการไม่เกิน 1 ชั่วโมง",
+        tags: ["Backup", "Business"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `backup ทุก 24 ชม.`,
+            },
+            {
+                heading: "Impact",
+                body: `data loss ได้ 24 ชม.`,
+            },
+            {
+                heading: "Fix",
+                body: `- incremental backup\n- replication`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Backup strategy ต้อง align กับ business requirement (RPO/RTO)`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 83,
+        slug: "no-capacity-headroom-risk",
+        title: "ไม่มี Capacity Headroom ทำให้ scale ไม่ทัน",
+        subtitle: "traffic spike → system ล่มทันที",
+        tags: ["Infrastructure", "Scaling"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `resource ใช้ 90-100% ตลอด`,
+            },
+            {
+                heading: "Impact",
+                body: `ไม่มี buffer รองรับ spike`,
+            },
+            {
+                heading: "Fix",
+                body: `- reserve capacity\n- auto scale`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Production ต้องมี headroom เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 84,
+        slug: "no-segmentation-flat-network-risk",
+        title: "Flat Network ทำให้ attacker เคลื่อนที่ได้ง่าย",
+        subtitle: "เครื่อง user compromise → เข้าถึง server ได้ทันที",
+        tags: ["Security", "Networking"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `network ไม่มี segmentation`,
+            },
+            {
+                heading: "Impact",
+                body: `lateral movement ง่าย`,
+            },
+            {
+                heading: "Fix",
+                body: `- VLAN segmentation\n- firewall rules`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Security ไม่ใช่แค่กันข้างนอก แต่ต้องกันภายในด้วย`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 85,
+        slug: "no-runbook-during-incident",
+        title: "ไม่มี Runbook ทำให้แก้ Incident แบบเดาสุ่ม",
+        subtitle: "ทุกครั้งที่ล่มต้องคิดใหม่หมด",
+        tags: ["Operations", "Incident"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `incident เกิด แต่ไม่มี guideline`,
+            },
+            {
+                heading: "Fix",
+                body: `- สร้าง runbook\n- step-by-step recovery`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Runbook ลดเวลาแก้ปัญหาได้มหาศาล`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 86,
+        slug: "misaligned-it-and-business-goals",
+        title: "IT กับ Business ไม่ align ทำให้ลงทุนผิดจุด",
+        subtitle: "ลงทุน infra แต่ไม่แก้ pain point จริง",
+        tags: ["Strategy", "Management"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "ปัญหา",
+                body: `IT focus technical แต่ business มีปัญหาอื่น`,
+            },
+            {
+                heading: "Impact",
+                body: `ลงทุนไม่เกิด ROI`,
+            },
+            {
+                heading: "Fix",
+                body: `- เข้าใจ business process\n- prioritize impact`,
+            },
+            {
+                heading: "Key Learning",
+                body: `IT ที่ดีต้องเข้าใจ business ไม่ใช่แค่ technology`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 87,
+        slug: "sql-server-connection-pool-exhausted",
+        title: "API ล่มเพราะ SQL Connection Pool เต็ม",
+        subtitle: "ไม่มี error ชัดเจน แต่ request ค้าง — เพราะ connection ไม่ถูก release",
+        tags: ["SQL Server", "Node.js", "Production"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `API ช้าลงเรื่อยๆ → สุดท้ายค้าง\nCPU ปกติ แต่ request ไม่ตอบ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Connection ถูกเปิดแต่ไม่ถูก close\npool เต็ม → request ใหม่รอคิว`,
+            },
+            {
+                heading: "วิธีตรวจสอบ",
+                body: `SELECT * FROM sys.dm_exec_sessions\nดูจำนวน connection ค้าง`,
+            },
+            {
+                heading: "Fix",
+                body: `- ensure close connection\n- ใช้ connection pool ถูกต้อง`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ระบบไม่ล่มทันที แต่จะ "ค่อยๆ ตาย" — อันตรายกว่า crash`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 88,
+        slug: "windows-server-dns-misconfig-domain-issue",
+        title: "Domain Login ช้าเพราะ DNS ชี้ไป public DNS",
+        subtitle: "เครื่อง join domain แต่ใช้ 8.8.8.8 → auth ช้าและ fail",
+        tags: ["Windows Server", "Active Directory"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Login domain ช้ามาก หรือบางครั้งเข้าไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Client ใช้ DNS เป็น 8.8.8.8 แทน AD DNS`,
+            },
+            {
+                heading: "Fix",
+                body: `ตั้ง DNS ให้ชี้ Domain Controller เท่านั้น`,
+            },
+            {
+                heading: "Key Learning",
+                body: `AD พังส่วนใหญ่เริ่มจาก DNS`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 89,
+        slug: "docker-disk-full-log-growth",
+        title: "Docker disk เต็มเพราะ log container โตไม่จำกัด",
+        subtitle: "container ปกติ แต่ disk เต็มเพราะ json.log",
+        tags: ["Docker", "Linux"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Disk เต็มแบบไม่รู้สาเหตุ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Docker log (/var/lib/docker/containers/*.log) โตหลาย GB`,
+            },
+            {
+                heading: "Fix",
+                body: `ตั้ง log rotation:\n--log-opt max-size=10m\n--log-opt max-file=3`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Default Docker = ไม่จำกัด log`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 90,
+        slug: "sql-deadlock-production-issue",
+        title: "Deadlock ทำให้ transaction fail แบบสุ่ม",
+        subtitle: "บาง request สำเร็จ บาง request fail — เพราะ lock ชนกัน",
+        tags: ["SQL Server", "Performance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `API error เป็นช่วงๆ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Transaction lock resource คนละ order → deadlock`,
+            },
+            {
+                heading: "Fix",
+                body: `- ใช้ consistent order\n- retry logic`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Deadlock ไม่ใช่ bug แต่เป็น behavior ของ DB`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 91,
+        slug: "nas-permission-cache-issue",
+        title: "แก้ permission แล้วแต่ยังเข้าไม่ได้ เพราะ cache",
+        subtitle: "NAS / Windows cache สิทธิ์ไว้ ทำให้ผลไม่อัปเดตทันที",
+        tags: ["NAS", "Windows"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `แก้ permission แล้ว user ยังเข้าไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `SMB session cache permission`,
+            },
+            {
+                heading: "Fix",
+                body: `logoff/logon ใหม่ หรือ restart service`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Permission ไม่ได้ apply real-time เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 92,
+        slug: "ssl-certificate-expired-downtime",
+        title: "SSL หมดอายุทำให้ระบบใช้งานไม่ได้ทันที",
+        subtitle: "เว็บเข้าไม่ได้เพราะ certificate expire",
+        tags: ["SSL", "Security"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `User เข้าเว็บไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `SSL certificate หมดอายุ`,
+            },
+            {
+                heading: "Fix",
+                body: `renew certificate + ตั้ง auto-renew`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Certificate expiry = predictable incident ที่ป้องกันได้`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 93,
+        slug: "high-cpu-single-process-nodejs",
+        title: "CPU 100% เพราะ infinite loop ใน Node.js",
+        subtitle: "process เดียวกิน CPU ทั้งเครื่อง",
+        tags: ["Node.js", "Performance"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `CPU 100% ตลอด`,
+            },
+            {
+                heading: "Root Cause",
+                body: `loop ไม่มี exit condition`,
+            },
+            {
+                heading: "Fix",
+                body: `debug stack trace และแก้ logic`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Bug เล็กใน code = impact ใหญ่ใน production`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 94,
+        slug: "network-latency-intermittent-issue",
+        title: "ระบบช้าเป็นช่วงๆ เพราะ latency network",
+        subtitle: "ไม่ใช่ server ช้า แต่ network delay",
+        tags: ["Networking", "Performance"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `บางช่วงเร็ว บางช่วงช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `network congestion หรือ packet loss`,
+            },
+            {
+                heading: "Fix",
+                body: `monitor latency / packet loss`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Performance problem ไม่ได้อยู่ที่ server เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 95,
+        slug: "windows-update-break-service",
+        title: "Windows Update ทำ service พัง",
+        subtitle: "update แล้วระบบใช้งานไม่ได้",
+        tags: ["Windows", "Incident"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `service หยุดหลัง update`,
+            },
+            {
+                heading: "Root Cause",
+                body: `dependency เปลี่ยน`,
+            },
+            {
+                heading: "Fix",
+                body: `rollback update`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Update ต้อง test ก่อนเสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 96,
+        slug: "file-locking-multi-user-problem",
+        title: "ไฟล์ใช้งานร่วมกันแล้ว save ไม่ได้เพราะ lock",
+        subtitle: "multi-user access ทำให้ file conflict",
+        tags: ["Windows", "File Server"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `save file ไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `file ถูก lock โดย user อื่น`,
+            },
+            {
+                heading: "Fix",
+                body: `identify user ที่ lock`,
+            },
+            {
+                heading: "Key Learning",
+                body: `File-based system ไม่เหมาะกับ concurrent user`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 97,
+        slug: "sql-server-blocking-chain",
+        title: "Query ช้าทั้งระบบเพราะ Blocking Chain",
+        subtitle: "ไม่ได้ช้าเพราะ query แย่ แต่รอ lock จาก query อื่น",
+        tags: ["SQL Server", "Performance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Query ช้าทั้งระบบ แต่ CPU ไม่สูง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `มี query ตัวหนึ่ง lock resource แล้ว query อื่นรอ (blocking chain)`,
+            },
+            {
+                heading: "วิธีตรวจสอบ",
+                body: `sp_who2 หรือ sys.dm_exec_requests`,
+            },
+            {
+                heading: "Fix",
+                body: `kill session ที่ block หรือ optimize query`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Slow system ≠ slow query เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 98,
+        slug: "mikrotik-firewall-rule-order",
+        title: "Firewall Rule ทำงานผิดเพราะลำดับ rule",
+        subtitle: "rule ถูกต้องแต่ไม่ทำงาน เพราะถูก rule ก่อนหน้าจับไปแล้ว",
+        tags: ["MikroTik", "Firewall"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `rule allow ไม่ทำงาน`,
+            },
+            {
+                heading: "Root Cause",
+                body: `rule deny อยู่ก่อน`,
+            },
+            {
+                heading: "Fix",
+                body: `จัดลำดับ rule ใหม่`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Firewall = first match wins`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 99,
+        slug: "hypervisor-overcommit-memory",
+        title: "VM ช้าเพราะ overcommit RAM",
+        subtitle: "host มี RAM ไม่พอ แต่รัน VM เยอะเกิน",
+        tags: ["Virtualization", "Performance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `VM ทุกตัวช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `RAM จริงไม่พอ แต่ allocate ให้ VM เยอะ`,
+            },
+            {
+                heading: "Fix",
+                body: `ลด VM หรือเพิ่ม RAM`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Overcommit มากไป = performance collapse`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 100,
+        slug: "dns-cache-poison-local-machine",
+        title: "เครื่องเข้าเว็บผิดเพราะ DNS cache เพี้ยน",
+        subtitle: "domain ถูก แต่ resolve ไป IP ผิด",
+        tags: ["DNS", "Windows"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `เข้าเว็บไปอีก server`,
+            },
+            {
+                heading: "Root Cause",
+                body: `DNS cache เก่า`,
+            },
+            {
+                heading: "Fix",
+                body: `ipconfig /flushdns`,
+            },
+            {
+                heading: "Key Learning",
+                body: `DNS cache เป็น source ของ bug ที่มองไม่เห็น`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 101,
+        slug: "sql-index-missing-performance",
+        title: "Query ช้าเพราะไม่มี Index",
+        subtitle: "table โตขึ้น แต่ query ยังเหมือนเดิม",
+        tags: ["SQL Server", "Performance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Query เคยเร็ว ตอนนี้ช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `table โต แต่ไม่มี index`,
+            },
+            {
+                heading: "Fix",
+                body: `create index`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Data growth = performance change`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 102,
+        slug: "windows-service-dependency-fail",
+        title: "Service start ไม่ขึ้นเพราะ dependency ไม่พร้อม",
+        subtitle: "service ตัวหนึ่งต้องรออีกตัว",
+        tags: ["Windows", "Service"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `service start fail`,
+            },
+            {
+                heading: "Root Cause",
+                body: `dependency service ยังไม่ start`,
+            },
+            {
+                heading: "Fix",
+                body: `set startup delay หรือ dependency`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Service chain สำคัญใน Windows`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 103,
+        slug: "network-loop-switch-storm",
+        title: "Network loop ทำให้ทั้ง LAN ใช้งานไม่ได้",
+        subtitle: "เสียบสายผิด → broadcast storm",
+        tags: ["Networking", "Switch"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Network ทั้งบริษัทช้า/ล่ม`,
+            },
+            {
+                heading: "Root Cause",
+                body: `Loop ใน switch`,
+            },
+            {
+                heading: "Fix",
+                body: `ถอดสาย / enable STP`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Loop เล็กๆ = impact ใหญ่`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 104,
+        slug: "sql-timeout-long-query",
+        title: "Query timeout เพราะ query ใช้เวลานานเกิน",
+        subtitle: "ไม่ได้ error DB แต่ client timeout",
+        tags: ["SQL Server", "Application"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `API timeout`,
+            },
+            {
+                heading: "Root Cause",
+                body: `query ใช้เวลานาน`,
+            },
+            {
+                heading: "Fix",
+                body: `optimize query`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Timeout ไม่ใช่ DB fail แต่เป็น latency issue`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 105,
+        slug: "nas-disk-degraded-ignore",
+        title: "Disk RAID degraded แต่ไม่มี alert",
+        subtitle: "รู้ตัวอีกที disk เสีย 2 ลูก data หาย",
+        tags: ["NAS", "Storage"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `NAS ใช้งานปกติ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `disk เสีย 1 ลูก แต่ไม่รู้`,
+            },
+            {
+                heading: "Fix",
+                body: `monitor RAID status`,
+            },
+            {
+                heading: "Key Learning",
+                body: `RAID ต้อง monitor`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 106,
+        slug: "cpu-throttling-overheat",
+        title: "Server ช้าเพราะ CPU throttle จากความร้อน",
+        subtitle: "hardware issue ไม่ใช่ software",
+        tags: ["Hardware", "Performance"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `server ช้าเป็นช่วง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `CPU overheat`,
+            },
+            {
+                heading: "Fix",
+                body: `clean fan / improve cooling`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Performance issue ไม่ได้มาจาก software เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 107,
+        slug: "memory-leak-nodejs-production",
+        title: "Memory Leak ใน Node.js ทำให้ระบบล่มแบบค่อยๆ ตาย",
+        subtitle: "RAM เพิ่มเรื่อยๆ จน container restart — ไม่ crash ทันที",
+        tags: ["Node.js", "Production", "Performance"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `ระบบปกติช่วงแรก → RAM เพิ่มเรื่อยๆ → OOM → restart`,
+            },
+            {
+                heading: "Root Cause",
+                body: `object ถูกเก็บใน memory แต่ไม่ถูก GC (เช่น global cache, event listener ซ้ำ)`,
+            },
+            {
+                heading: "วิธีตรวจ",
+                body: `heap snapshot / clinic.js / --inspect`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Memory leak = slow death ของ system`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 108,
+        slug: "asymmetric-routing-network-issue",
+        title: "Network ใช้ได้บ้างไม่ได้บ้างเพราะ Asymmetric Routing",
+        subtitle: "request ไปเส้นหนึ่ง แต่ response กลับอีกเส้น → firewall drop",
+        tags: ["Networking", "Advanced"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `ping ได้ แต่บาง service ใช้ไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `routing ไม่ symmetric`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Network issue ที่ debug ยากที่สุดคือ "บางครั้งใช้ได้"`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 109,
+        slug: "sql-server-parameter-sniffing",
+        title: "Parameter Sniffing ทำ query บางครั้งเร็ว บางครั้งช้า",
+        subtitle: "execution plan ถูก cache แต่ไม่เหมาะกับทุกค่า",
+        tags: ["SQL Server", "Advanced"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `query เดียวกัน บางครั้งเร็ว บางครั้งช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `execution plan cache จาก parameter แรก`,
+            },
+            {
+                heading: "Fix",
+                body: `OPTION (RECOMPILE) หรือ optimize`,
+            },
+            {
+                heading: "Key Learning",
+                body: `SQL ไม่ได้ deterministic เสมอ`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 110,
+        slug: "ad-replication-fail-silent",
+        title: "AD Replication Fail แบบเงียบ ทำให้ user login ไม่ตรงกัน",
+        subtitle: "DC แต่ละตัวมีข้อมูลไม่เหมือนกัน",
+        tags: ["Active Directory", "Critical"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `บางเครื่อง login ได้ บางเครื่องไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `AD replication fail`,
+            },
+            {
+                heading: "Key Learning",
+                body: `AD problem มักไม่ error ชัด แต่ impact สูง`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 111,
+        slug: "tcp-ephemeral-port-exhaustion",
+        title: "Server ใช้งานไม่ได้เพราะ TCP port หมด",
+        subtitle: "เปิด connection เยอะเกิน → port ไม่พอ",
+        tags: ["Networking", "OS"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `connect service ไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ephemeral port หมด`,
+            },
+            {
+                heading: "Fix",
+                body: `tune port range / close connection`,
+            },
+            {
+                heading: "Key Learning",
+                body: `OS limitation ก็ทำให้ system ล่มได้`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 112,
+        slug: "split-brain-dns-issue",
+        title: "Split-brain DNS ทำให้ resolve ต่างกันใน network เดียวกัน",
+        subtitle: "เครื่องใน LAN กับ VPN ได้ IP คนละค่า",
+        tags: ["DNS", "Advanced"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `user บางคนเข้าได้ บางคนเข้าไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `DNS view ต่างกัน`,
+            },
+            {
+                heading: "Key Learning",
+                body: `DNS issue = confusing ที่สุดใน network`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 113,
+        slug: "clock-drift-distributed-system",
+        title: "Time drift ทำ distributed system พัง",
+        subtitle: "เวลาไม่ตรง → token invalid / log เพี้ยน",
+        tags: ["Distributed System", "NTP"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `auth fail ทั้งที่ credential ถูก`,
+            },
+            {
+                heading: "Root Cause",
+                body: `server time ไม่ sync`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Time sync คือ dependency ที่คนมองข้าม`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 114,
+        slug: "mtu-mismatch-network-problem",
+        title: "MTU mismatch ทำให้ packet หายแบบแปลกๆ",
+        subtitle: "ping ได้ แต่ upload/download fail",
+        tags: ["Networking", "Advanced"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `บางเว็บโหลดไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `MTU mismatch`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Layer 3/4 problem มักซับซ้อน`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 115,
+        slug: "file-descriptor-limit-linux",
+        title: "Linux service ล่มเพราะ file descriptor เต็ม",
+        subtitle: "เปิด connection/file มากเกิน limit",
+        tags: ["Linux", "System"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `service error: too many open files`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ulimit ต่ำ`,
+            },
+            {
+                heading: "Fix",
+                body: `เพิ่ม ulimit`,
+            },
+            {
+                heading: "Key Learning",
+                body: `OS limit คือ bottleneck ที่มองไม่เห็น`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 116,
+        slug: "cache-invalidation-bug",
+        title: "Cache ทำข้อมูลไม่ตรง reality",
+        subtitle: "user เห็นข้อมูลเก่าเพราะ cache",
+        tags: ["System Design"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `data ไม่ update`,
+            },
+            {
+                heading: "Root Cause",
+                body: `cache ไม่ invalidate`,
+            },
+            {
+                heading: "Key Learning",
+                body: `There are only 2 hard things: cache & naming`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 117,
+        slug: "zombie-process-linux",
+        title: "Zombie Process สะสมจน system แปลกๆ",
+        subtitle: "process ตายแต่ยังอยู่ใน table",
+        tags: ["Linux"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `process แปลกๆ เพิ่ม`,
+            },
+            {
+                heading: "Root Cause",
+                body: `parent ไม่ reap child`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Process management สำคัญใน OS`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 118,
+        slug: "kernel-panic-linux",
+        title: "Kernel Panic ทำ server reboot เอง",
+        subtitle: "ระดับ OS crash ไม่ใช่ application",
+        tags: ["Linux", "Critical"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `server reboot เอง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `kernel bug / hardware`,
+            },
+            {
+                heading: "Key Learning",
+                body: `บางปัญหาอยู่ต่ำกว่า application`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 119,
+        slug: "dns-ttl-propagation-delay",
+        title: "แก้ DNS แล้วแต่ยังไม่ update เพราะ TTL",
+        subtitle: "user บางคนยังเข้า IP เก่า",
+        tags: ["DNS"],
+        date: "2026",
+        readTime: "3 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `บาง user ใช้ IP เก่า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `DNS TTL cache`,
+            },
+            {
+                heading: "Key Learning",
+                body: `DNS change ไม่ได้ real-time`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 120,
+        slug: "thread-pool-starvation",
+        title: "Thread Pool เต็มทำให้ request ค้าง",
+        subtitle: "ไม่ได้ crash แต่ไม่ตอบ",
+        tags: ["Backend", "Performance"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `request ค้าง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `thread pool หมด`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Resource exhaustion ไม่จำเป็นต้อง crash`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 121,
+        slug: "ghost-network-issue-no-packet-capture",
+        title: "Network ใช้งานไม่ได้บางช่วง แต่ packet capture ไม่เห็นอะไรผิด",
+        subtitle: "ทุกอย่างดูปกติ แต่ user ใช้งานไม่ได้ — สุดท้ายเป็น NIC firmware bug",
+        tags: ["Networking", "Hardware", "Advanced"],
+        date: "2026",
+        readTime: "6 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `User บ่นใช้งานไม่ได้เป็นช่วงๆ แต่ ping ได้, tcpdump ปกติ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `NIC firmware มี bug ทำให้ drop packet บาง pattern`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ถ้า software ทุกอย่างปกติ → suspect hardware`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 122,
+        slug: "sql-server-ghost-record-fragmentation",
+        title: "Query ช้าจาก Ghost Record และ Fragmentation",
+        subtitle: "ลบข้อมูลแล้วแต่ performance ไม่ดีขึ้น",
+        tags: ["SQL Server", "Deep Performance"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `ลบ data ไปเยอะ แต่ query ยังช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `ghost record + index fragmentation`,
+            },
+            {
+                heading: "Fix",
+                body: `index rebuild / reorganize`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Delete ≠ space คืนทันที`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 123,
+        slug: "ad-dns-srv-record-missing",
+        title: "AD ใช้งานไม่ได้เพราะ SRV record หาย",
+        subtitle: "Domain ยังอยู่ แต่ client หา DC ไม่เจอ",
+        tags: ["Active Directory", "DNS"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `Login domain ไม่ได้`,
+            },
+            {
+                heading: "Root Cause",
+                body: `SRV record (_ldap._tcp) หาย`,
+            },
+            {
+                heading: "Key Learning",
+                body: `AD = DNS-driven system`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 124,
+        slug: "docker-overlay-network-bug",
+        title: "Docker Swarm network ใช้ได้บาง node",
+        subtitle: "container บางเครื่อง connect กันไม่ได้",
+        tags: ["Docker", "Swarm", "Networking"],
+        date: "2026",
+        readTime: "6 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `service บาง node ใช้งานได้ บาง node fail`,
+            },
+            {
+                heading: "Root Cause",
+                body: `overlay network bug / MTU mismatch`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Distributed system = debug ยากกว่า single host หลายเท่า`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 125,
+        slug: "cpu-steal-virtualization",
+        title: "VM ช้าเพราะ CPU Steal จาก Hypervisor",
+        subtitle: "CPU usage ต่ำ แต่ performance แย่",
+        tags: ["Virtualization", "Performance"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `CPU ใน VM ดูว่าง แต่ระบบช้า`,
+            },
+            {
+                heading: "Root Cause",
+                body: `CPU ถูก host แย่งไป (steal time)`,
+            },
+            {
+                heading: "Key Learning",
+                body: `VM metric ไม่ได้บอกความจริงทั้งหมด`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 126,
+        slug: "ssl-chain-intermediate-missing",
+        title: "SSL ใช้ได้บาง browser เพราะ chain ไม่ครบ",
+        subtitle: "Chrome เข้าได้ แต่บาง client ไม่ได้",
+        tags: ["SSL", "Security"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `บาง user เข้าได้ บาง user error`,
+            },
+            {
+                heading: "Root Cause",
+                body: `missing intermediate certificate`,
+            },
+            {
+                heading: "Key Learning",
+                body: `SSL ต้องครบ chain ไม่ใช่แค่ cert เดียว`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 127,
+        slug: "ntfs-mft-fragmentation",
+        title: "Disk ช้าเพราะ MFT fragmentation",
+        subtitle: "IO สูงผิดปกติแม้ disk ปกติ",
+        tags: ["Windows", "Storage"],
+        date: "2026",
+        readTime: "5 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `disk usage สูง แต่ throughput ต่ำ`,
+            },
+            {
+                heading: "Root Cause",
+                body: `MFT fragmentation`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Filesystem ก็มี performance issue ของมันเอง`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 128,
+        slug: "tls-version-mismatch",
+        title: "TLS version mismatch ทำให้ connect ไม่ได้",
+        subtitle: "server รองรับ TLS1.2 แต่ client ใช้ TLS1.0",
+        tags: ["Security", "Networking"],
+        date: "2026",
+        readTime: "4 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `connect fail แบบไม่มี message ชัด`,
+            },
+            {
+                heading: "Root Cause",
+                body: `TLS version ไม่ตรง`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Security hardening มี impact ต่อ compatibility`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 129,
+        slug: "race-condition-distributed-system",
+        title: "Race Condition ใน distributed system ทำ data เพี้ยน",
+        subtitle: "request มาพร้อมกัน → state ไม่ตรง",
+        tags: ["Distributed System", "Concurrency"],
+        date: "2026",
+        readTime: "6 min",
+        sections: [
+            {
+                heading: "อาการ",
+                body: `data บาง record ไม่ถูกต้อง`,
+            },
+            {
+                heading: "Root Cause",
+                body: `race condition`,
+            },
+            {
+                heading: "Key Learning",
+                body: `Concurrency bug = debug ยากที่สุด`,
+                isCallout: true,
+            },
+        ],
+    },
+    {
+        id: 130,
+        slug: "no-root-cause-after-hours-debug",
+        title: "Debug 6 ชั่วโมงแต่ไม่เจอสาเหตุ เพราะไม่มี data",
+        subtitle: "สุดท้ายแก้ด้วยการเพิ่ม observability ไม่ใช่ fix bug",
+        tags: ["Observability", "Reality"],
+        date: "2026",
+        readTime: "6 min",
+        sections: [
+            {
+                heading: "สถานการณ์จริง",
+                body: `system มีปัญหา intermittent แต่ไม่มี log, metric, trace`,
+            },
+            {
+                heading: "สิ่งที่ทำ",
+                body: `debug ทุก layer แต่ไม่มี evidence`,
+            },
+            {
+                heading: "Fix จริง",
+                body: `เพิ่ม logging, monitoring, tracing ก่อน`,
+            },
+            {
+                heading: "Key Learning",
+                body: `ปัญหาบางอย่าง "แก้ไม่ได้" ถ้าไม่มี data\n\nObservability มาก่อน troubleshooting`,
+                isCallout: true,
+            },
+        ],
+    },
 ];
