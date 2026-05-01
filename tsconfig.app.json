@@ -10,7 +10,6 @@
     "allowImportingTsExtensions": true,
 
     "types": ["vite/client"],
-    "ignoreDeprecations": "6.0",
 
     "strict": false,
     "noUnusedLocals": false,
