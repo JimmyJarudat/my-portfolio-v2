@@ -80,6 +80,14 @@ const Header = () => {
             ))}
           </nav>
 
+          {/* Guides Button - outlined ✦ */}
+          <Link to="/guides">
+            <button className="inline-flex items-center justify-center h-[44px] px-6 rounded-full font-semibold border-2 border-accent text-accent hover:bg-accent hover:text-primary transition-all duration-300">
+              {t.navbar.guides} ✦
+            </button>
+          </Link>
+
+
           {/* Blog Button */}
           <Link to="/tech-note">
             <button className="inline-flex items-center justify-center h-[44px] px-6 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors">
@@ -100,9 +108,9 @@ const Header = () => {
             <LanguageToggle />
             <ThemeToggle />
           </div>
-          
+
           <div className="w-px h-8 bg-white/20"></div>
-          
+
           <button onClick={() => setOpen(true)} className="flex justify-center items-center">
             <CiMenuFries className="text-[32px] text-accent" />
           </button>
@@ -123,16 +131,22 @@ const Header = () => {
                 </div>
                 <nav className="flex flex-col justify-center items-center gap-8">
                   {NAV_KEYS.map((key) => (
-                    <Link 
-                      key={key} 
-                      to={NAV_PATHS[key]} 
-                      onClick={() => setOpen(false)} 
+                    <Link
+                      key={key}
+                      to={NAV_PATHS[key]}
+                      onClick={() => setOpen(false)}
                       className={linkClass(NAV_PATHS[key])}
                     >
                       {t.navbar[key]}
                     </Link>
                   ))}
-                  
+
+                  <Link to="/guides" onClick={() => setOpen(false)}>
+                    <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold border-2 border-accent text-accent hover:bg-accent hover:text-primary transition-all duration-300 mt-2">
+                      {t.navbar.guides} ✦
+                    </button>
+                  </Link>
+
                   {/* Blog Link in Mobile Menu */}
                   <Link to="/tech-notes" onClick={() => setOpen(false)}>
                     <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors mt-4">

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 import { getNotes } from "@/services/notesService";
+import { Pagination } from "@/components/Pagination";
 
 const NOTES_PER_PAGE = 10;
 
@@ -165,102 +166,31 @@ const NoteDetail = ({
   </div>
 );
 
-// ─── Pagination Controls ───────────────────────────────────────────────────────
-const Pagination = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-  border,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  border: string;
-}) => {
-  if (totalPages <= 1) return null;
 
-  // Build page number array with ellipsis logic
-  const getPages = (): (number | "...")[] => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const pages: (number | "...")[] = [];
-    if (currentPage <= 4) {
-      pages.push(1, 2, 3, 4, 5, "...", totalPages);
-    } else if (currentPage >= totalPages - 3) {
-      pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-    } else {
-      pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
-    }
-    return pages;
-  };
 
-  return (
-    <div className="flex items-center justify-center gap-1.5 mt-10">
-      {/* Prev */}
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="font-mono text-[11px] tracking-wide px-3 py-1.5 rounded border transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent/50 hover:text-accent"
-        style={{ borderColor: border, color: "var(--text-muted)" }}
-      >
-        ←
-      </button>
-
-      {/* Pages */}
-      {getPages().map((p, i) =>
-        p === "..." ? (
-          <span
-            key={`ellipsis-${i}`}
-            className="font-mono text-[11px] px-2"
-            style={{ color: "var(--text-muted)" }}
-          >
-            …
-          </span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => onPageChange(p as number)}
-            className="font-mono text-[11px] tracking-wide w-8 h-8 rounded border transition-all duration-150"
-            style={
-              p === currentPage
-                ? {
-                    borderColor: "var(--accent)",
-                    color: "var(--accent)",
-                    background: "rgba(99,219,188,0.08)",
-                  }
-                : { borderColor: border, color: "var(--text-muted)" }
-            }
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      {/* Next */}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="font-mono text-[11px] tracking-wide px-3 py-1.5 rounded border transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent/50 hover:text-accent"
-        style={{ borderColor: border, color: "var(--text-muted)" }}
-      >
-        →
-      </button>
-    </div>
-  );
-};
+// ─── helpers: read / write ?note=slug in the URL ─────────────────────────────
+const getNoteSlugFromURL = () =>
+  new URLSearchParams(window.location.search).get("note") ?? null;
 
 // ─── Tech Notes Page ──────────────────────────────────────────────────────────
 const TechNotesPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
 
+  // slug of the currently-open note (drives URL + view)
+  const [activeSlug, setActiveSlug] = useState<string | null>(getNoteSlugFromURL);
+
+  // remember scroll position + page before opening a note
+  const savedScroll = useRef(0);
+  const savedPage   = useRef(1);
+
   const border = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)";
   const cardBg = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)";
 
-  const selectedNote = notes.find((n) => n.id === selectedId) ?? null;
+  const selectedNote = activeSlug ? notes.find((n) => n.slug === activeSlug) ?? null : null;
 
   // ── Filter by search query (title + subtitle + tags) ──
   const q = search.trim().toLowerCase();
@@ -279,14 +209,50 @@ const TechNotesPage = () => {
     currentPage * NOTES_PER_PAGE
   );
 
+  // ── Load notes ──
   useEffect(() => {
     getNotes().then(setNotes).catch(console.error);
+  }, []);
+
+  // ── Sync URL → state when user hits browser Back/Forward ──
+  useEffect(() => {
+    const onPop = () => {
+      const slug = getNoteSlugFromURL();
+      setActiveSlug(slug);
+      if (!slug) {
+        setCurrentPage(savedPage.current);
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: savedScroll.current, behavior: "instant" });
+        });
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   // Reset to page 1 whenever search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
+
+  // ── Open a note ──
+  const openNote = (note: Note) => {
+    savedScroll.current = window.scrollY;
+    savedPage.current   = currentPage;
+    setActiveSlug(note.slug);
+    window.history.pushState({ slug: note.slug }, "", `${window.location.pathname}?note=${note.slug}`);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+
+  // ── Close / back button inside the article ──
+  const closeNote = () => {
+    setActiveSlug(null);
+    window.history.pushState({}, "", window.location.pathname);
+    setCurrentPage(savedPage.current);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScroll.current, behavior: "instant" });
+    });
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -312,7 +278,7 @@ const TechNotesPage = () => {
             note={selectedNote}
             border={border}
             cardBg={cardBg}
-            onBack={() => setSelectedId(null)}
+            onBack={closeNote}
           />
         ) : (
           <>
@@ -381,7 +347,7 @@ const TechNotesPage = () => {
                   return (
                     <div
                       key={note.id}
-                      onClick={() => setSelectedId(note.id)}
+                      onClick={() => openNote(note)}
                       className="group p-5 rounded-xl border cursor-pointer transition-all duration-150 hover:border-accent/40"
                       style={{ borderColor: border, background: cardBg }}
                     >

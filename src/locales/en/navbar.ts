@@ -5,4 +5,5 @@ export const en = {
   certificate: "Certificate",
   about: "About",
   blog: "Tech Notes",
+  guides: "Guides",
 };
