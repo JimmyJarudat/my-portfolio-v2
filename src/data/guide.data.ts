@@ -2946,10 +2946,51 @@ alias sstatus='sudo systemctl status'`,
     },
 
 
-    // Task Scheduler Automation
-    // Move SQL Backup ไปยัง NAS
-    // Disk Space Alert — script + Telegram notify
-    // Service Down Alert — detect + auto restart
+    {
+        id: 34, slug: "task-scheduler-automation", category: "infrastructure",
+        title: "Task Scheduler Automation — Backup to NAS, Disk Alert, Service Monitor",
+        description: "ใช้ Windows Task Scheduler + PowerShell script อัตโนมัติสามงานที่ทุก sysadmin ต้องการ: ย้าย SQL backup ขึ้น NAS, แจ้งเตือน Telegram เมื่อ disk เกือบเต็ม และ restart service อัตโนมัติเมื่อล่ม",
+        difficulty: "intermediate", time: "45 min",
+        tags: ["Task Scheduler", "PowerShell", "SQL Server", "NAS", "Telegram", "Automation"], updated: "May 2025",
+        prerequisites: ["Windows Server พร้อมสิทธิ์ Administrator", "NAS หรือ network share สำหรับเก็บ backup", "Telegram bot token (สำหรับ alert) — สร้างผ่าน @BotFather"],
+        steps: [
+            {
+                title: "พื้นฐาน Task Scheduler — สร้าง Task ด้วย GUI",
+                body: "ทำความรู้จักโครงสร้าง Task Scheduler ก่อนเขียน script เพื่อให้เข้าใจว่า trigger, action และ condition ทำงานยังไง",
+                code: "# เปิด Task Scheduler\n# Win+R → taskschd.msc\n\n# โครงสร้างของ Task:\n# Triggers  → เมื่อไหร่จะรัน (daily, weekly, on event, on startup)\n# Actions   → รันอะไร (program/script)\n# Conditions → เงื่อนไขเพิ่มเติม (เฉพาะตอน idle, ต่อ AC เท่านั้น)\n# Settings  → จะทำอะไรถ้า task ล้มเหลว, timeout, ห้ามรันซ้อน\n\n# สร้าง Task ผ่าน PowerShell (ไม่ต้องเปิด GUI):\n$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `\n             -Argument '-NonInteractive -ExecutionPolicy Bypass -File \"C:\\Scripts\\myscript.ps1\"'\n$trigger = New-ScheduledTaskTrigger -Daily -At '02:00AM'\n$settings = New-ScheduledTaskSettingsSet `\n             -ExecutionTimeLimit (New-TimeSpan -Hours 1) `\n             -RestartCount 2 -RestartInterval (New-TimeSpan -Minutes 5)\n\nRegister-ScheduledTask -TaskName 'MyTask' `\n  -Action $action -Trigger $trigger -Settings $settings `\n  -RunLevel Highest -User 'SYSTEM'",
+                lang: "powershell",
+                note: "ใช้ -User 'SYSTEM' สำหรับงานที่ต้องสิทธิ์สูงและไม่ต้องการ user กด OK ก่อน — SYSTEM account มีสิทธิ์บนเครื่องเต็มแต่ไม่มีสิทธิ์ network share โดย default ถ้าต้องเข้า NAS ให้ใช้ service account แทน",
+            },
+            {
+                title: "Script: ย้าย SQL Backup ไปยัง NAS",
+                body: "Script นี้ copy ไฟล์ backup (.bak) ที่สร้างวันนี้จาก SQL Server ไปยัง NAS และลบ backup เก่าเกิน 30 วัน",
+                code: "# C:\\Scripts\\move-sql-backup.ps1\n\n$sourceDir  = 'D:\\SQLBackup'\n$destDir    = '\\\\NAS\\SQLBackup'   # UNC path ของ NAS\n$retainDays = 30\n$logFile    = 'C:\\Logs\\backup-copy.log'\n\nfunction Write-Log($msg) {\n    \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg\" | Tee-Object -FilePath $logFile -Append\n}\n\nWrite-Log '=== Start backup copy ==='\n\n# Copy ไฟล์ .bak ที่แก้ไขวันนี้\n$today = Get-Date -Format 'yyyy-MM-dd'\ntry {\n    $files = Get-ChildItem -Path $sourceDir -Filter '*.bak' -Recurse |\n             Where-Object { $_.LastWriteTime.Date -eq (Get-Date).Date }\n\n    foreach ($file in $files) {\n        $dest = Join-Path $destDir $file.Name\n        Copy-Item -Path $file.FullName -Destination $dest -Force\n        Write-Log \"Copied: $($file.Name)\"\n    }\n} catch {\n    Write-Log \"ERROR copying: $_\"\n}\n\n# ลบ backup เก่าบน NAS\ntry {\n    $cutoff = (Get-Date).AddDays(-$retainDays)\n    Get-ChildItem -Path $destDir -Filter '*.bak' |\n        Where-Object { $_.LastWriteTime -lt $cutoff } |\n        ForEach-Object {\n            Remove-Item $_.FullName -Force\n            Write-Log \"Deleted old backup: $($_.Name)\"\n        }\n} catch {\n    Write-Log \"ERROR deleting old backups: $_\"\n}\n\nWrite-Log '=== Done ==='\n\n# ===== สร้าง Scheduled Task =====\n$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `\n             -Argument '-NonInteractive -ExecutionPolicy Bypass -File \"C:\\Scripts\\move-sql-backup.ps1\"'\n$trigger = New-ScheduledTaskTrigger -Daily -At '03:00AM'\nRegister-ScheduledTask -TaskName 'Move SQL Backup to NAS' `\n  -Action $action -Trigger $trigger -RunLevel Highest `\n  -User 'DOMAIN\\svc_backup' -Password 'ServiceAccPass!'",
+                lang: "powershell",
+                note: "ใช้ service account (svc_backup) แทน SYSTEM เพราะ SYSTEM ไม่มีสิทธิ์เข้า network path — grant service account ให้มี Write permission บน NAS share ก่อน",
+            },
+            {
+                title: "Script: Disk Space Alert + Telegram Notify",
+                body: "Script ตรวจ disk ทุก drive ถ้าเหลือน้อยกว่า threshold จะส่งแจ้งเตือนผ่าน Telegram",
+                code: "# C:\\Scripts\\disk-alert.ps1\n# ต้องมี Telegram Bot Token และ Chat ID ก่อน\n# สร้าง Bot: คุยกับ @BotFather ใน Telegram → /newbot\n# หา Chat ID: ส่งข้อความให้ bot แล้วเปิด\n# https://api.telegram.org/bot<TOKEN>/getUpdates\n\n$botToken    = 'YOUR_BOT_TOKEN'\n$chatId      = 'YOUR_CHAT_ID'\n$threshold   = 20   # แจ้งเตือนถ้าเหลือน้อยกว่า 20%\n$serverName  = $env:COMPUTERNAME\n\nfunction Send-Telegram($message) {\n    $uri  = \"https://api.telegram.org/bot$botToken/sendMessage\"\n    $body = @{ chat_id = $chatId; text = $message; parse_mode = 'HTML' }\n    try {\n        Invoke-RestMethod -Uri $uri -Method Post -Body $body | Out-Null\n    } catch {\n        Write-EventLog -LogName Application -Source 'DiskAlert' `\n          -EntryType Error -EventId 9001 -Message \"Telegram error: $_\"\n    }\n}\n\n$drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -gt 0 }\n\nforeach ($drive in $drives) {\n    $total   = $drive.Used + $drive.Free\n    $freeGB  = [math]::Round($drive.Free / 1GB, 1)\n    $freePct = [math]::Round(($drive.Free / $total) * 100, 1)\n\n    if ($freePct -lt $threshold) {\n        $msg = @\"\n<b>Disk Alert</b>\nServer: $serverName\nDrive:  $($drive.Name):\\\nFree:   $freeGB GB ($freePct%)\nStatus: CRITICAL — เหลือน้อยกว่า $threshold%\n\"@\n        Send-Telegram $msg\n    }\n}\n\n# ===== สร้าง Scheduled Task =====\n$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `\n             -Argument '-NonInteractive -ExecutionPolicy Bypass -File \"C:\\Scripts\\disk-alert.ps1\"'\n$trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 6) `\n             -Once -At (Get-Date)\nRegister-ScheduledTask -TaskName 'Disk Space Alert' `\n  -Action $action -Trigger $trigger -RunLevel Highest -User 'SYSTEM'",
+                lang: "powershell",
+                note: "ถ้าเครื่องอยู่หลัง firewall ที่บล็อก HTTPS ออกนอก ต้องเพิ่ม firewall rule อนุญาต outbound port 443 ไปยัง api.telegram.org — หรือใช้ SMTP แจ้งเตือนทางอีเมลแทน",
+            },
+            {
+                title: "Script: Service Down Alert + Auto Restart",
+                body: "Script ตรวจ service ที่กำหนดไว้ ถ้า service หยุดจะพยายาม restart อัตโนมัติและส่ง Telegram แจ้ง",
+                code: "# C:\\Scripts\\service-monitor.ps1\n\n$botToken   = 'YOUR_BOT_TOKEN'\n$chatId     = 'YOUR_CHAT_ID'\n$serverName = $env:COMPUTERNAME\n\n# รายชื่อ service ที่ต้องการ monitor (ชื่อ Service Name ไม่ใช่ Display Name)\n# ดูชื่อจริงได้จาก: Get-Service | Select-Object Name, DisplayName\n$monitoredServices = @(\n    'MSSQLSERVER',     # SQL Server (default instance)\n    'SQLSERVERAGENT',  # SQL Server Agent\n    'W3SVC',           # IIS\n    'WinRM'            # Windows Remote Management\n)\n\nfunction Send-Telegram($message) {\n    $uri  = \"https://api.telegram.org/bot$botToken/sendMessage\"\n    $body = @{ chat_id = $chatId; text = $message; parse_mode = 'HTML' }\n    Invoke-RestMethod -Uri $uri -Method Post -Body $body | Out-Null\n}\n\nforeach ($svcName in $monitoredServices) {\n    $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue\n    if (-not $svc) { continue }   # ไม่มี service นี้บนเครื่อง ข้ามไป\n\n    if ($svc.Status -ne 'Running') {\n        # พยายาม restart\n        try {\n            Start-Service -Name $svcName -ErrorAction Stop\n            $newStatus = (Get-Service -Name $svcName).Status\n\n            Send-Telegram @\"\n<b>Service Restarted</b>\nServer:  $serverName\nService: $($svc.DisplayName)\nStatus:  $newStatus\n\"@\n        } catch {\n            Send-Telegram @\"\n<b>Service DOWN — Restart FAILED</b>\nServer:  $serverName\nService: $($svc.DisplayName)\nError:   $_\n\"@\n            # บันทึก Event Log ด้วย\n            Write-EventLog -LogName Application -Source 'ServiceMonitor' `\n              -EntryType Error -EventId 9002 `\n              -Message \"Failed to restart $svcName on $serverName\"\n        }\n    }\n}\n\n# ===== สร้าง Scheduled Task (รันทุก 5 นาที) =====\n$action  = New-ScheduledTaskAction -Execute 'powershell.exe' `\n             -Argument '-NonInteractive -ExecutionPolicy Bypass -File \"C:\\Scripts\\service-monitor.ps1\"'\n$trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 5) `\n             -Once -At (Get-Date) -RepetitionDuration ([TimeSpan]::MaxValue)\nRegister-ScheduledTask -TaskName 'Service Monitor' `\n  -Action $action -Trigger $trigger -RunLevel Highest -User 'SYSTEM'",
+                lang: "powershell",
+                note: "Task Scheduler ที่รันถี่ (ทุก 5 นาที) อาจทำให้หน้า Task Scheduler ดูไม่ออกว่า last run time คือเมื่อไหร่ — แนะนำให้ดู log ใน Application Event Log หรือเพิ่ม Write-Log ลงในไฟล์แทน",
+            },
+            {
+                title: "ตรวจสอบและจัดการ Task ผ่าน PowerShell",
+                body: "คำสั่ง PowerShell สำหรับดู, รัน, หยุด และ export Task Scheduler โดยไม่ต้องเปิด GUI",
+                code: "# ดู task ทั้งหมดที่สร้างไว้\nGet-ScheduledTask | Select-Object TaskName, State, TaskPath | Format-Table\n\n# ดู task เฉพาะตัว\nGet-ScheduledTask -TaskName 'Move SQL Backup to NAS'\n\n# รัน task ทันที (manual trigger)\nStart-ScheduledTask -TaskName 'Move SQL Backup to NAS'\n\n# ดู last run result\n(Get-ScheduledTaskInfo -TaskName 'Move SQL Backup to NAS').LastTaskResult\n# 0 = สำเร็จ, 1 = ล้มเหลว, 267009 = ยังรันอยู่\n\n# ดู last run time\n(Get-ScheduledTaskInfo -TaskName 'Move SQL Backup to NAS').LastRunTime\n\n# หยุด task ที่กำลังรัน\nStop-ScheduledTask -TaskName 'Move SQL Backup to NAS'\n\n# ลบ task\nUnregister-ScheduledTask -TaskName 'Move SQL Backup to NAS' -Confirm:$false\n\n# Enable / Disable\nEnable-ScheduledTask  -TaskName 'Disk Space Alert'\nDisable-ScheduledTask -TaskName 'Disk Space Alert'\n\n# Export task เป็น XML (backup ก่อนลบ)\nExport-ScheduledTask -TaskName 'Service Monitor' | Out-File C:\\Scripts\\service-monitor-task.xml\n\n# Import task จาก XML\nRegister-ScheduledTask -Xml (Get-Content C:\\Scripts\\service-monitor-task.xml -Raw) `\n  -TaskName 'Service Monitor' -Force",
+                lang: "powershell",
+                note: "LastTaskResult = 0 ไม่ได้แปลว่า script รันสำเร็จเสมอไป — แปลว่า Task Scheduler launch process ได้ ส่วน script error ต้องดูในไฟล์ log หรือ Event Log แยกต่างหาก",
+            },
+        ],
+    },
 
     // Troubleshooting
 
