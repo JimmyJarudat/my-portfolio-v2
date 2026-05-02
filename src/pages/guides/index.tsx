@@ -1,16 +1,16 @@
 // pages/GuidesPage.tsx
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { GUIDES } from "../../data/guide.data";
+import { Pagination } from "@/components/Pagination";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Difficulty = "beginner" | "intermediate" | "advanced";
 type Category = "infrastructure" | "docker-swarm" | "observability";
 
-
-
-
 // ─── Constants ────────────────────────────────────────────────────────────────
+
+const GUIDES_PER_PAGE = 8;
 
 const CATEGORIES: { key: Category | "all"; label: string; icon: string }[] = [
     { key: "all", label: "ทั้งหมด", icon: "✦" },
@@ -33,16 +33,20 @@ const getSlugFromURL = () =>
 const DiffBadge = ({ level }: { level: Difficulty }) => {
     const { label, color, bg } = DIFF[level];
     return (
-        <span className="font-mono text-[9px] tracking-widest uppercase px-2.5 py-0.5 rounded-full border"
-            style={{ color, background: bg, borderColor: color + "33" }}>
+        <span
+            className="font-mono text-[9px] tracking-widest uppercase px-2.5 py-0.5 rounded-full border"
+            style={{ color, background: bg, borderColor: color + "33" }}
+        >
             {label}
         </span>
     );
 };
 
 const Tag = ({ label }: { label: string }) => (
-    <span className="font-mono text-[9px] tracking-widest uppercase px-2 py-0.5 rounded border"
-        style={{ borderColor: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+    <span
+        className="font-mono text-[9px] tracking-widest uppercase px-2 py-0.5 rounded border"
+        style={{ borderColor: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}
+    >
         {label}
     </span>
 );
@@ -57,22 +61,35 @@ const CodeBlock = ({ code, lang }: { code: string; lang?: string }) => {
         setTimeout(() => setCopied(false), 1800);
     };
     return (
-        <div className="rounded-xl overflow-hidden mt-3"
-            style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center justify-between px-4 py-2"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <span className="font-mono text-[10px] tracking-widest uppercase"
-                    style={{ color: "var(--text-muted)", opacity: 0.4 }}>
+        <div
+            className="rounded-xl overflow-hidden mt-3"
+            style={{
+                background: "var(--code-bg, rgba(0,0,0,0.06))",
+                border: "1px solid var(--code-border, rgba(0,0,0,0.1))",
+            }}
+        >
+            <div
+                className="flex items-center justify-between px-4 py-2"
+                style={{ borderBottom: "1px solid var(--code-border, rgba(0,0,0,0.1))" }}
+            >
+                <span
+                    className="font-mono text-[10px] tracking-widest uppercase"
+                    style={{ color: "var(--text-muted)", opacity: 0.6 }}
+                >
                     {lang ?? "bash"}
                 </span>
-                <button onClick={copy}
+                <button
+                    onClick={copy}
                     className="font-mono text-[10px] tracking-widest uppercase transition-colors"
-                    style={{ color: copied ? "var(--accent)" : "var(--text-muted)", opacity: copied ? 1 : 0.5 }}>
+                    style={{ color: copied ? "var(--accent)" : "var(--text-muted)", opacity: copied ? 1 : 0.5 }}
+                >
                     {copied ? "✓ copied" : "copy"}
                 </button>
             </div>
-            <pre className="p-4 overflow-x-auto font-mono text-[12px] leading-relaxed"
-                style={{ color: "var(--accent)", margin: 0 }}>
+            <pre
+                className="p-4 overflow-x-auto font-mono text-[12px] leading-relaxed"
+                style={{ color: "var(--code-text, var(--text))", margin: 0 }}
+            >
                 <code>{code}</code>
             </pre>
         </div>
@@ -85,33 +102,50 @@ const StepImage = ({ src, caption }: { src: string; caption?: string }) => {
     const [open, setOpen] = useState(false);
     return (
         <>
-            <div className="mt-3 rounded-xl overflow-hidden cursor-zoom-in"
+            <div
+                className="mt-3 rounded-xl overflow-hidden cursor-zoom-in"
                 style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-                onClick={() => setOpen(true)}>
-                <img src={src} alt={caption ?? ""} className="w-full object-cover max-h-72 transition-transform duration-300 hover:scale-[1.02]" />
+                onClick={() => setOpen(true)}
+            >
+                <img
+                    src={src}
+                    alt={caption ?? ""}
+                    className="w-full object-cover max-h-72 transition-transform duration-300 hover:scale-[1.02]"
+                />
                 {caption && (
-                    <p className="px-3 py-2 font-mono text-[10px] tracking-wide"
-                        style={{ color: "var(--text-muted)", opacity: 0.55, background: "rgba(0,0,0,0.3)" }}>
+                    <p
+                        className="px-3 py-2 font-mono text-[10px] tracking-wide"
+                        style={{ color: "var(--text-muted)", opacity: 0.55, background: "rgba(0,0,0,0.3)" }}
+                    >
                         ↳ {caption}
                     </p>
                 )}
             </div>
 
-            {/* Lightbox */}
             {open && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
                     style={{ background: "rgba(0,0,0,0.85)" }}
-                    onClick={() => setOpen(false)}>
+                    onClick={() => setOpen(false)}
+                >
                     <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
                         <button
                             className="absolute -top-8 right-0 font-mono text-[11px] tracking-widest uppercase transition-colors"
                             style={{ color: "var(--text-muted)" }}
-                            onClick={() => setOpen(false)}>
+                            onClick={() => setOpen(false)}
+                        >
                             ✕ ปิด
                         </button>
-                        <img src={src} alt={caption ?? ""} className="w-full rounded-xl object-contain max-h-[80vh]" />
+                        <img
+                            src={src}
+                            alt={caption ?? ""}
+                            className="w-full rounded-xl object-contain max-h-[80vh]"
+                        />
                         {caption && (
-                            <p className="text-center font-mono text-[11px] mt-3" style={{ color: "var(--text-muted)", opacity: 0.6 }}>
+                            <p
+                                className="text-center font-mono text-[11px] mt-3"
+                                style={{ color: "var(--text-muted)", opacity: 0.6 }}
+                            >
                                 {caption}
                             </p>
                         )}
@@ -125,29 +159,37 @@ const StepImage = ({ src, caption }: { src: string; caption?: string }) => {
 // ─── Guide Detail ─────────────────────────────────────────────────────────────
 
 const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) => {
-    const border = "rgba(255,255,255,0.07)";
     return (
         <div className="max-w-2xl mx-auto px-6 py-10">
-
-            <button onClick={onBack}
+            <button
+                onClick={onBack}
                 className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide mb-8 hover:text-accent transition-colors"
-                style={{ color: "var(--text-muted)" }}>
+                style={{ color: "var(--text-muted)" }}
+            >
                 ← กลับ
             </button>
 
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
                 <DiffBadge level={guide.difficulty} />
-                <span className="font-mono text-[10px] tracking-widest uppercase"
-                    style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+                <span
+                    className="font-mono text-[10px] tracking-widest uppercase"
+                    style={{ color: "var(--text-muted)", opacity: 0.5 }}
+                >
                     {guide.steps.length} steps · {guide.time} · {guide.updated}
                 </span>
             </div>
 
-            <h1 className="font-bold text-2xl xl:text-3xl leading-snug mb-3" style={{ color: "var(--text)" }}>
+            <h1
+                className="font-bold text-2xl xl:text-3xl leading-snug mb-3"
+                style={{ color: "var(--text)" }}
+            >
                 {guide.title}
             </h1>
-            <p className="font-mono text-[13px] leading-relaxed mb-5" style={{ color: "var(--text-muted)" }}>
+            <p
+                className="font-mono text-[13px] leading-relaxed mb-5"
+                style={{ color: "var(--text-muted)" }}
+            >
                 {guide.description}
             </p>
             <div className="flex flex-wrap gap-1.5 mb-6">
@@ -156,17 +198,28 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
 
             {/* Prerequisites */}
             {guide.prerequisites && (
-                <div className="rounded-xl border p-4 mb-8"
-                    style={{ borderColor: "rgba(99,219,188,0.2)", background: "rgba(99,219,188,0.03)" }}>
-                    <p className="font-mono text-[10px] tracking-widest uppercase mb-3"
-                        style={{ color: "var(--accent)", opacity: 0.7 }}>
+                <div
+                    className="rounded-xl border p-4 mb-8"
+                    style={{ borderColor: "rgba(99,219,188,0.2)", background: "rgba(99,219,188,0.03)" }}
+                >
+                    <p
+                        className="font-mono text-[10px] tracking-widest uppercase mb-3"
+                        style={{ color: "var(--accent)", opacity: 0.7 }}
+                    >
                         ✦ prerequisites
                     </p>
                     <ul className="space-y-1.5">
                         {guide.prerequisites.map((p, i) => (
                             <li key={i} className="flex items-start gap-2">
-                                <span className="font-mono text-[11px] mt-0.5" style={{ color: "var(--accent)", opacity: 0.5 }}>–</span>
-                                <span className="font-mono text-[12px]" style={{ color: "var(--text-muted)" }}>{p}</span>
+                                <span
+                                    className="font-mono text-[11px] mt-0.5"
+                                    style={{ color: "var(--accent)", opacity: 0.5 }}
+                                >
+                                    –
+                                </span>
+                                <span className="font-mono text-[12px]" style={{ color: "var(--text-muted)" }}>
+                                    {p}
+                                </span>
                             </li>
                         ))}
                     </ul>
@@ -179,25 +232,37 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
             <div className="space-y-0">
                 {guide.steps.map((step, i) => (
                     <div key={i} className="flex gap-5">
-                        {/* Number + connector line */}
                         <div className="flex flex-col items-center shrink-0 pt-0.5">
-                            <div className="w-7 h-7 rounded-full border flex items-center justify-center shrink-0"
-                                style={{ borderColor: "var(--accent)", background: "rgba(99,219,188,0.08)" }}>
-                                <span className="font-mono text-[10px] font-bold" style={{ color: "var(--accent)" }}>
+                            <div
+                                className="w-7 h-7 rounded-full border flex items-center justify-center shrink-0"
+                                style={{ borderColor: "var(--accent)", background: "rgba(99,219,188,0.08)" }}
+                            >
+                                <span
+                                    className="font-mono text-[10px] font-bold"
+                                    style={{ color: "var(--accent)" }}
+                                >
                                     {String(i + 1).padStart(2, "0")}
                                 </span>
                             </div>
                             {i < guide.steps.length - 1 && (
-                                <div className="w-px flex-1 mt-2 mb-0" style={{ background: "rgba(99,219,188,0.15)", minHeight: "32px" }} />
+                                <div
+                                    className="w-px flex-1 mt-2 mb-0"
+                                    style={{ background: "rgba(99,219,188,0.15)", minHeight: "32px" }}
+                                />
                             )}
                         </div>
 
-                        {/* Content */}
                         <div className="flex-1 pb-8">
-                            <h3 className="font-bold text-[15px] mb-1.5 leading-snug" style={{ color: "var(--text)" }}>
+                            <h3
+                                className="font-bold text-[15px] mb-1.5 leading-snug"
+                                style={{ color: "var(--text)" }}
+                            >
                                 {step.title}
                             </h3>
-                            <p className="font-mono text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                            <p
+                                className="font-mono text-[13px] leading-relaxed"
+                                style={{ color: "var(--text-muted)" }}
+                            >
                                 {step.body}
                             </p>
                             {step.code && <CodeBlock code={step.code} lang={step.lang} />}
@@ -210,7 +275,10 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
                             )}
                             {step.note && (
                                 <div className="flex items-start gap-2 mt-3 pl-3 border-l-2 border-accent/40">
-                                    <p className="font-mono text-[11px] leading-relaxed" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                                    <p
+                                        className="font-mono text-[11px] leading-relaxed"
+                                        style={{ color: "var(--text-muted)", opacity: 0.7 }}
+                                    >
                                         💡 {step.note}
                                     </p>
                                 </div>
@@ -221,9 +289,14 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
             </div>
 
             {/* Done banner */}
-            <div className="mt-4 p-6 rounded-2xl border text-center"
-                style={{ borderColor: "rgba(99,219,188,0.2)", background: "rgba(99,219,188,0.03)" }}>
-                <p className="font-mono text-[10px] tracking-widest uppercase mb-1" style={{ color: "var(--accent)" }}>
+            <div
+                className="mt-4 p-6 rounded-2xl border text-center"
+                style={{ borderColor: "rgba(99,219,188,0.2)", background: "rgba(99,219,188,0.03)" }}
+            >
+                <p
+                    className="font-mono text-[10px] tracking-widest uppercase mb-1"
+                    style={{ color: "var(--accent)" }}
+                >
                     ✦ เสร็จสิ้น
                 </p>
                 <p className="font-mono text-[12px]" style={{ color: "var(--text-muted)" }}>
@@ -231,9 +304,11 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
                 </p>
             </div>
 
-            <button onClick={onBack}
+            <button
+                onClick={onBack}
                 className="mt-8 font-mono text-[11px] tracking-wide hover:text-accent transition-colors block"
-                style={{ color: "var(--text-muted)" }}>
+                style={{ color: "var(--text-muted)" }}
+            >
                 ← กลับไป Guides
             </button>
         </div>
@@ -242,11 +317,20 @@ const GuideDetail = ({ guide, onBack }: { guide: Guide; onBack: () => void }) =>
 
 // ─── Guide Card ───────────────────────────────────────────────────────────────
 
-const GuideCard = ({ guide, onClick }: { guide: Guide; onClick: () => void }) => {
+const GuideCard = ({
+    guide,
+    index,
+    onClick,
+}: {
+    guide: Guide;
+    index: number;
+    onClick: () => void;
+}) => {
     const [hovered, setHovered] = useState(false);
     const border = "rgba(255,255,255,0.07)";
     return (
-        <div onClick={onClick}
+        <div
+            onClick={onClick}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             className="rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden"
@@ -255,26 +339,42 @@ const GuideCard = ({ guide, onClick }: { guide: Guide; onClick: () => void }) =>
                 background: hovered ? "rgba(99,219,188,0.03)" : "rgba(255,255,255,0.02)",
                 transform: hovered ? "translateY(-2px)" : "translateY(0)",
                 boxShadow: hovered ? "0 8px 32px rgba(99,219,188,0.08)" : "none",
-            }}>
-            <div className="h-0.5 transition-all duration-500"
-                style={{ background: hovered ? "var(--accent)" : "transparent" }} />
+            }}
+        >
+            <div
+                className="h-0.5 transition-all duration-500"
+                style={{ background: hovered ? "var(--accent)" : "transparent" }}
+            />
             <div className="p-6 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
+                        {/* ─── ลำดับ ─── */}
+                        <span
+                            className="font-mono text-[11px] tabular-nums font-bold shrink-0"
+                            style={{ color: "var(--accent)", opacity: 0.5 }}
+                        >
+                            #{String(index).padStart(2, "0")}
+                        </span>
                         <DiffBadge level={guide.difficulty} />
-                        <span className="font-mono text-[9px] tracking-widest uppercase"
-                            style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+                        <span
+                            className="font-mono text-[9px] tracking-widest uppercase"
+                            style={{ color: "var(--text-muted)", opacity: 0.5 }}
+                        >
                             {guide.steps.length} steps · {guide.time}
                         </span>
                     </div>
-                    <span className="font-mono text-[10px] shrink-0 transition-colors"
-                        style={{ color: hovered ? "var(--accent)" : "var(--text-muted)", opacity: hovered ? 1 : 0.4 }}>
+                    <span
+                        className="font-mono text-[10px] shrink-0 transition-colors"
+                        style={{ color: hovered ? "var(--accent)" : "var(--text-muted)", opacity: hovered ? 1 : 0.4 }}
+                    >
                         {guide.updated}
                     </span>
                 </div>
                 <div>
-                    <h3 className="font-bold text-[16px] leading-snug mb-2 transition-colors"
-                        style={{ color: hovered ? "var(--accent)" : "var(--text)" }}>
+                    <h3
+                        className="font-bold text-[16px] leading-snug mb-2 transition-colors"
+                        style={{ color: hovered ? "var(--accent)" : "var(--text)" }}
+                    >
                         {guide.title}
                     </h3>
                     <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
@@ -285,12 +385,63 @@ const GuideCard = ({ guide, onClick }: { guide: Guide; onClick: () => void }) =>
                     <div className="flex flex-wrap gap-1.5">
                         {guide.tags.map((t) => <Tag key={t} label={t} />)}
                     </div>
-                    <span className="font-mono text-[14px] transition-all duration-300"
-                        style={{ color: "var(--accent)", opacity: hovered ? 1 : 0, transform: hovered ? "translateX(0)" : "translateX(-6px)" }}>
+                    <span
+                        className="font-mono text-[14px] transition-all duration-300"
+                        style={{
+                            color: "var(--accent)",
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? "translateX(0)" : "translateX(-6px)",
+                        }}
+                    >
                         →
                     </span>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// ─── Search Input ─────────────────────────────────────────────────────────────
+
+const SearchInput = ({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+}) => {
+    const border = "rgba(255,255,255,0.07)";
+    return (
+        <div className="relative">
+            <span
+                className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-[12px] pointer-events-none select-none"
+                style={{ color: "var(--text-muted)", opacity: 0.4 }}
+            >
+                ⌕
+            </span>
+            <input
+                type="text"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="ค้นหา guide, tag, หรือ keyword..."
+                className="w-full font-mono text-[12px] rounded-xl px-4 py-2.5 pl-8 outline-none transition-all duration-200"
+                style={{
+                    background: "var(--search-bg, rgba(120,120,120,0.1))",
+                    border: `1px solid ${value ? "var(--accent)" : "rgba(150,150,150,0.25)"}`,
+                    color: "var(--text)",
+                    caretColor: "var(--accent)",
+                    boxShadow: value ? "0 0 0 3px rgba(99,219,188,0.08)" : "none",
+                }}
+            />
+            {value && (
+                <button
+                    onClick={() => onChange("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[11px] transition-colors"
+                    style={{ color: "var(--text-muted)", opacity: 0.5 }}
+                >
+                    ✕
+                </button>
+            )}
         </div>
     );
 };
@@ -300,16 +451,60 @@ const GuideCard = ({ guide, onClick }: { guide: Guide; onClick: () => void }) =>
 const GuidesPage = () => {
     const [active, setActive] = useState<Category | "all">("all");
     const [activeSlug, setActiveSlug] = useState<string | null>(getSlugFromURL);
+    const [search, setSearch] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
     const savedScroll = useRef(0);
 
     const border = "rgba(255,255,255,0.07)";
-    const filtered = active === "all" ? GUIDES : GUIDES.filter((g) => g.category === active);
+
+    // ── Filter logic ──
+    const filtered = GUIDES.filter((g) => {
+        const matchCat = active === "all" || g.category === active;
+        if (!matchCat) return false;
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return (
+            g.title.toLowerCase().includes(q) ||
+            g.description.toLowerCase().includes(q) ||
+            g.tags.some((t) => t.toLowerCase().includes(q))
+        );
+    });
+
+    const totalPages = Math.ceil(filtered.length / GUIDES_PER_PAGE);
+    const paginated = filtered.slice((currentPage - 1) * GUIDES_PER_PAGE, currentPage * GUIDES_PER_PAGE);
+
     const selected = activeSlug ? GUIDES.find((g) => g.slug === activeSlug) ?? null : null;
+
+    // ── Reset page on filter/search change ──
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [active, search]);
+
+    // ── Browser back/forward button support ──
+    useEffect(() => {
+        const handlePopState = () => {
+            const slug = getSlugFromURL();
+            setActiveSlug(slug);
+            if (!slug) {
+                requestAnimationFrame(() =>
+                    window.scrollTo({ top: savedScroll.current, behavior: "instant" })
+                );
+            } else {
+                window.scrollTo({ top: 0, behavior: "instant" });
+            }
+        };
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, []);
 
     const openGuide = (guide: Guide) => {
         savedScroll.current = window.scrollY;
         setActiveSlug(guide.slug);
-        window.history.pushState({ slug: guide.slug }, "", `${window.location.pathname}?guide=${guide.slug}`);
+        window.history.pushState(
+            { slug: guide.slug },
+            "",
+            `${window.location.pathname}?guide=${guide.slug}`
+        );
         window.scrollTo({ top: 0, behavior: "instant" });
     };
 
@@ -319,6 +514,11 @@ const GuidesPage = () => {
         requestAnimationFrame(() =>
             window.scrollTo({ top: savedScroll.current, behavior: "instant" })
         );
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     // ── Detail view ──
@@ -338,24 +538,40 @@ const GuidesPage = () => {
 
             {/* Hero */}
             <div className="relative overflow-hidden pt-32 pb-16 px-6">
-                <div className="absolute inset-0 pointer-events-none" style={{
-                    backgroundImage: "linear-gradient(rgba(99,219,188,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,219,188,0.03) 1px, transparent 1px)",
-                    backgroundSize: "48px 48px",
-                }} />
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(ellipse, rgba(99,219,188,0.08) 0%, transparent 70%)", filter: "blur(40px)" }} />
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage:
+                            "linear-gradient(rgba(99,219,188,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(99,219,188,0.03) 1px, transparent 1px)",
+                        backgroundSize: "48px 48px",
+                    }}
+                />
+                <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full pointer-events-none"
+                    style={{
+                        background: "radial-gradient(ellipse, rgba(99,219,188,0.08) 0%, transparent 70%)",
+                        filter: "blur(40px)",
+                    }}
+                />
 
                 <div className="max-w-3xl mx-auto relative">
-                    <p className="font-mono text-[10px] tracking-[0.3em] uppercase mb-4"
-                        style={{ color: "var(--accent)", opacity: 0.7 }}>
-                        ✦ step-by-step guides
+                    <p
+                        className="font-mono text-[10px] tracking-[0.3em] uppercase mb-4"
+                        style={{ color: "var(--accent)", opacity: 0.7 }}
+                    >
+                        ✦ practical guides
                     </p>
-                    <h1 className="font-bold leading-none mb-5"
-                        style={{ color: "var(--text)", fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+                    <h1
+                        className="font-bold leading-none mb-5"
+                        style={{ color: "var(--text)", fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
+                    >
                         Guides<span style={{ color: "var(--accent)" }}>.</span>
                     </h1>
-                    <p className="text-[15px] leading-relaxed max-w-lg" style={{ color: "var(--text-muted)" }}>
-                        คู่มือ setup และ deploy จากประสบการณ์ทำงานจริง — ทำตามได้ทันที ตั้งแต่ VPS ใหม่จนถึง production stack
+                    <p
+                        className="text-[15px] leading-relaxed max-w-lg"
+                        style={{ color: "var(--text-muted)" }}
+                    >
+                        สิ่งที่เจอจริง แก้จริง และใช้งานอยู่ — ครอบคลุมตั้งแต่ Linux, Docker, Windows Server ไปจนถึง Network และ Monitoring
                     </p>
                     <div className="flex items-center gap-6 mt-8">
                         {[
@@ -364,63 +580,138 @@ const GuidesPage = () => {
                             { label: "Avg. time", value: "38 min" },
                         ].map(({ label, value }) => (
                             <div key={label} className="flex flex-col">
-                                <span className="font-bold text-[22px] tabular-nums" style={{ color: "var(--accent)" }}>{value}</span>
-                                <span className="font-mono text-[9px] tracking-widest uppercase"
-                                    style={{ color: "var(--text-muted)", opacity: 0.5 }}>{label}</span>
+                                <span
+                                    className="font-bold text-[22px] tabular-nums"
+                                    style={{ color: "var(--accent)" }}
+                                >
+                                    {value}
+                                </span>
+                                <span
+                                    className="font-mono text-[9px] tracking-widest uppercase"
+                                    style={{ color: "var(--text-muted)", opacity: 0.5 }}
+                                >
+                                    {label}
+                                </span>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* Filter */}
-            <div className="sticky top-0 z-10 px-6 py-4"
-                style={{ background: "var(--bg)", borderBottom: `1px solid ${border}` }}>
-                <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto pb-0.5">
-                    {CATEGORIES.map(({ key, label, icon }) => {
-                        const isA = active === key;
-                        return (
-                            <button key={key} onClick={() => setActive(key as Category | "all")}
-                                className="font-mono text-[10px] tracking-widest uppercase px-4 py-2 rounded-lg border transition-all duration-200 whitespace-nowrap shrink-0"
-                                style={{
-                                    borderColor: isA ? "var(--accent)" : border,
-                                    background: isA ? "rgba(99,219,188,0.08)" : "transparent",
-                                    color: isA ? "var(--accent)" : "var(--text-muted)",
-                                }}>
-                                <span className="mr-1.5 opacity-60">{icon}</span>{label}
-                            </button>
-                        );
-                    })}
+            {/* Filter + Search */}
+            <div
+                className="sticky top-0 z-10 px-6 py-4"
+                style={{ background: "var(--bg)", borderBottom: `1px solid ${border}` }}
+            >
+                <div className="max-w-3xl mx-auto space-y-3">
+                    {/* Category tabs */}
+                    <div className="flex gap-2 overflow-x-auto pb-0.5">
+                        {CATEGORIES.map(({ key, label, icon }) => {
+                            const isA = active === key;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => setActive(key as Category | "all")}
+                                    className="font-mono text-[10px] tracking-widest uppercase px-4 py-2 rounded-lg border transition-all duration-200 whitespace-nowrap shrink-0"
+                                    style={{
+                                        borderColor: isA ? "var(--accent)" : border,
+                                        background: isA ? "rgba(99,219,188,0.08)" : "transparent",
+                                        color: isA ? "var(--accent)" : "var(--text-muted)",
+                                    }}
+                                >
+                                    <span className="mr-1.5 opacity-60">{icon}</span>
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Search */}
+                    <SearchInput value={search} onChange={setSearch} />
                 </div>
             </div>
 
             {/* Cards */}
             <div className="max-w-3xl mx-auto px-6 py-10">
                 <div className="flex items-center gap-3 mb-6">
-                    <p className="font-mono text-[10px] tracking-widest uppercase whitespace-nowrap"
-                        style={{ color: "var(--text-muted)" }}>
-                        {active === "all" ? "ทั้งหมด" : CATEGORIES.find(c => c.key === active)?.label}
+                    <p
+                        className="font-mono text-[10px] tracking-widest uppercase whitespace-nowrap"
+                        style={{ color: "var(--text-muted)" }}
+                    >
+                        {search
+                            ? `ผลลัพธ์ "${search}"`
+                            : active === "all"
+                            ? "ทั้งหมด"
+                            : CATEGORIES.find((c) => c.key === active)?.label}
                         {" "}— {filtered.length} guides
                     </p>
                     <div className="flex-1 h-px" style={{ background: border }} />
+                    {totalPages > 1 && (
+                        <span
+                            className="font-mono text-[10px] tracking-widest uppercase shrink-0"
+                            style={{ color: "var(--text-muted)", opacity: 0.4 }}
+                        >
+                            หน้า {currentPage}/{totalPages}
+                        </span>
+                    )}
                 </div>
+
+                {/* Empty state */}
+                {filtered.length === 0 && (
+                    <div
+                        className="p-10 rounded-2xl border text-center"
+                        style={{ borderColor: border, borderStyle: "dashed" }}
+                    >
+                        <p
+                            className="font-mono text-[10px] tracking-widest uppercase mb-2"
+                            style={{ color: "var(--text-muted)", opacity: 0.4 }}
+                        >
+                            ✦ ไม่พบ guide
+                        </p>
+                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                            ลองค้นหาด้วย keyword อื่น หรือเปลี่ยน category
+                        </p>
+                    </div>
+                )}
 
                 <div className="flex flex-col gap-4">
-                    {filtered.map((g) => (
-                        <GuideCard key={g.id} guide={g} onClick={() => openGuide(g)} />
-                    ))}
+                    {paginated.map((g, i) => {
+                        const globalIndex = (currentPage - 1) * GUIDES_PER_PAGE + i + 1;
+                        return (
+                            <GuideCard
+                                key={g.id}
+                                guide={g}
+                                index={globalIndex}
+                                onClick={() => openGuide(g)}
+                            />
+                        );
+                    })}
                 </div>
 
-                <div className="mt-12 p-6 rounded-2xl border text-center"
-                    style={{ borderColor: border, borderStyle: "dashed" }}>
-                    <p className="font-mono text-[10px] tracking-widest uppercase mb-2"
-                        style={{ color: "var(--accent)", opacity: 0.6 }}>
-                        ✦ more coming soon
-                    </p>
-                    <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                        กำลังเขียนเพิ่ม — Nginx Proxy Manager, SQL Server backup, Telegram bot
-                    </p>
-                </div>
+                {/* Pagination */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    border={border}
+                />
+
+                {filtered.length > 0 && (
+                    <div
+                        className="mt-8 p-6 rounded-2xl border text-center"
+                        style={{ borderColor: border, borderStyle: "dashed" }}
+                    >
+                        <p
+                            className="font-mono text-[10px] tracking-widest uppercase mb-2"
+                            style={{ color: "var(--accent)", opacity: 0.6 }}
+                        >
+                            ✦ more coming soon
+                        </p>
+                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+                            กำลังเขียนเพิ่ม — Nginx Proxy Manager, SQL Server backup, Telegram bot
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
