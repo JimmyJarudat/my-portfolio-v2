@@ -2832,7 +2832,66 @@ alias sstatus='sudo systemctl status'`,
         ],
     },
 
-    // ODBC setup
+    {
+        id: 32, slug: "odbc-setup-sql-server", category: "infrastructure",
+        title: "ODBC Setup — เชื่อมต่อ SQL Server จาก Windows",
+        description: "ตั้งค่า ODBC Data Source บน Windows เพื่อให้ application (Excel, Access, Power BI, หรือ app อื่นๆ) เชื่อมต่อ SQL Server ได้ผ่าน DSN รวมถึงการเลือกใช้ Windows Auth กับ SQL Auth และการแก้ปัญหาที่พบบ่อย",
+        difficulty: "beginner", time: "20 min",
+        tags: ["ODBC", "SQL Server", "Windows", "DSN", "Connection String"], updated: "May 2025",
+        prerequisites: ["SQL Server ติดตั้งแล้วและเปิดรับ connection", "มีสิทธิ์ Admin บน Windows client", "รู้ชื่อ server หรือ IP และชื่อ database ที่ต้องการเชื่อม"],
+        steps: [
+            {
+                title: "เปิด ODBC Data Source Administrator",
+                body: "Windows มี ODBC Administrator สองตัว — 32-bit และ 64-bit ต้องเลือกให้ตรงกับ bitness ของ application ที่จะใช้ DSN ถ้าไม่แน่ใจให้สร้างทั้งสองตัว",
+                code: "# เปิด 64-bit ODBC Administrator\n# Start → ค้นหา \"ODBC Data Sources (64-bit)\"\n# หรือรันจาก Run dialog (Win+R):\nodbcad32.exe\n\n# เปิด 32-bit ODBC Administrator\n# (จำเป็นถ้า app เช่น Excel 32-bit หรือ Access ใช้)\n%SystemRoot%\\SysWOW64\\odbcad32.exe\n\n# สังเกต title bar ของหน้าต่างว่าบอก 32 หรือ 64 bit",
+                lang: "bash",
+                note: "Excel และ Access มักเป็น 32-bit แม้รันบน Windows 64-bit — ถ้า app ไม่เห็น DSN ที่สร้างไว้ ให้ลองสร้างใหม่ใน ODBC ที่ตรง bitness กับ app",
+            },
+            {
+                title: "สร้าง System DSN ใหม่",
+                body: "System DSN ใช้ได้กับทุก user บนเครื่อง (ต่างจาก User DSN ที่ผูกกับ user คนเดียว) เหมาะสำหรับ application หรือ service ที่รันโดย account อื่น",
+                code: "# ขั้นตอนใน GUI:\n# 1. แท็บ \"System DSN\" → คลิก \"Add...\"\n# 2. เลือก driver: \"ODBC Driver 17 for SQL Server\"\n#    (หรือ 18 ถ้าติดตั้งไว้ — ใช้ version ล่าสุดที่มี)\n# 3. คลิก Finish → กรอกข้อมูล:\n\n# Name:        ชื่อที่ app จะอ้างอิง เช่น  MyAppDB\n# Description: (optional) บอกว่าเชื่อม server/db อะไร\n# Server:      SERVERNAME\\INSTANCENAME\n#              หรือ IP เช่น 192.168.1.10\\SQLEXPRESS\n#              ถ้าเป็น default instance ใส่แค่ชื่อ/IP\n\n# ตัวอย่างชื่อ server:\n# WS2025\\SQLEXPRESS       ← named instance\n# 192.168.1.10            ← default instance ผ่าน IP\n# WS2025,1433             ← ระบุ port ตรงๆ",
+                lang: "bash",
+                note: "ถ้าไม่เห็น driver \"ODBC Driver 17\" หรือ \"18\" ต้องดาวน์โหลดติดตั้งก่อน: ค้นหา \"Microsoft ODBC Driver for SQL Server download\" — ไม่ใช่ \"SQL Server Native Client\" ซึ่งเก่าและ deprecated แล้ว",
+            },
+            {
+                title: "เลือก Authentication Method",
+                body: "มีสองแบบ: Windows Authentication (ใช้ domain user ปัจจุบัน) กับ SQL Server Authentication (username/password ที่สร้างใน SQL Server) แต่ละแบบเหมาะกับสถานการณ์ต่างกัน",
+                code: "# === Windows Authentication ===\n# เลือก: \"With Integrated Windows authentication\"\n# → ใช้ AD user ที่ login Windows อยู่ ไม่ต้องใส่ password\n# → เหมาะกับ: domain environment, user login เองผ่าน app\n# → ข้อควรระวัง: service account ต้องมีสิทธิ์ใน SQL Server ด้วย\n\n# === SQL Server Authentication ===\n# เลือก: \"With SQL Server authentication using...\"\n# → ใส่ Login ID และ Password ที่สร้างใน SQL Server\n# → เหมาะกับ: app ที่รันโดย local service, non-domain machine\n# → ควรสร้าง SQL login แยกต่างหากที่มีสิทธิ์แค่ database นั้น\n\n# สร้าง SQL Login สำหรับ ODBC (รันบน SQL Server Management Studio):\nCREATE LOGIN odbc_app WITH PASSWORD = 'P@ssw0rd_Strong!';\nUSE MyDatabase;\nCREATE USER odbc_app FOR LOGIN odbc_app;\nALTER ROLE db_datareader ADD MEMBER odbc_app;\nALTER ROLE db_datawriter ADD MEMBER odbc_app;",
+                lang: "sql",
+                note: "สร้าง login แยกให้ ODBC app เสมอ — อย่าใช้ sa หรือ account ที่มีสิทธิ์ sysadmin เพราะถ้า connection string หลุดออกไป ความเสียหายจะจำกัดแค่ database นั้น",
+            },
+            {
+                title: "เลือก Default Database และ Test Connection",
+                body: "ระบุ database เริ่มต้นที่ DSN จะเชื่อม และทดสอบว่า connection ใช้งานได้จริงก่อนบันทึก",
+                code: "# ขั้นตอนใน wizard (ต่อจาก step 3):\n# → \"Change the default database to:\" → เลือก database ที่ต้องการ\n#    เช่น MyDatabase\n# → ตัวเลือกอื่นปล่อย default ไว้ก่อน\n# → Next → Finish\n\n# หน้าสุดท้ายจะมีปุ่ม \"Test Data Source...\"\n# คลิกแล้วต้องได้:\n# TESTS COMPLETED SUCCESSFULLY!\n\n# ถ้า test fail สังเกต error message:\n# [08001] → เชื่อม server ไม่ได้ (network/firewall/port)\n# [28000] → login failed (user/password ผิด หรือสิทธิ์ไม่พอ)\n# [42000] → database ไม่มีหรือ user ไม่มีสิทธิ์เข้า",
+                lang: "bash",
+                note: "ถ้า test ผ่านแล้วแต่ app ยังเชื่อมไม่ได้ ให้ตรวจ bitness ก่อนเลย (app เป็น 32-bit แต่สร้าง DSN ใน 64-bit ODBC) — นี่คือสาเหตุอันดับหนึ่งที่คนงงหลัง test ผ่านแล้ว",
+            },
+            {
+                title: "ตรวจสอบว่า SQL Server รับ TCP/IP Connection",
+                body: "ถ้า test ไม่ผ่านตั้งแต่แรก ให้ตรวจที่ SQL Server Configuration Manager ว่าเปิด TCP/IP ไว้หรือยัง",
+                code: "# เปิด SQL Server Configuration Manager\n# Start → ค้นหา \"SQL Server Configuration Manager\"\n\n# ขยาย: SQL Server Network Configuration\n# → Protocols for SQLEXPRESS (หรือ instance ที่ใช้)\n# → TCP/IP → ต้องเป็น \"Enabled\"\n#   ถ้า Disabled → คลิกขวา → Enable → restart SQL Server service\n\n# ตรวจ port ที่ใช้:\n# TCP/IP → Properties → IP Addresses → IPAll\n# TCP Dynamic Ports: ถ้ามีเลขอยู่ แสดงว่าใช้ dynamic port\n# TCP Port: ถ้าต้องการ fix port ให้ใส่ 1433\n#           แล้วลบค่า TCP Dynamic Ports ออก\n\n# หลัง enable TCP/IP ต้อง restart SQL Server service:\n# Services → SQL Server (SQLEXPRESS) → Restart\n\n# ตรวจ firewall ว่าเปิด port SQL Server แล้วหรือยัง:\nnetsh advfirewall firewall add rule name=\"SQL Server 1433\" `\n  protocol=TCP dir=in localport=1433 action=allow",
+                lang: "bash",
+                note: "SQL Server Express ที่ติดตั้งใหม่จะปิด TCP/IP ไว้ by default เพราะเหตุนี้การ connect จาก remote machine จึงไม่ได้เลยถ้าไม่ได้เปิด",
+            },
+            {
+                title: "ใช้ DSN ใน Application และ Connection String",
+                body: "เมื่อสร้าง DSN แล้ว app จะอ้างชื่อ DSN ได้เลย หรือจะ hardcode เป็น connection string ก็ได้ถ้าไม่ต้องการ DSN",
+                code: "# === ใช้งานใน Excel / Power Query ===\n# Data → Get Data → From Other Sources → From ODBC\n# → เลือกชื่อ DSN ที่สร้างไว้ เช่น MyAppDB\n\n# === Connection String แบบไม่ใช้ DSN (DSN-less) ===\n# ใช้ได้กับ app ที่ต้องการ config แบบ string เดียว\n\n# Windows Auth:\nDriver={ODBC Driver 17 for SQL Server};Server=WS2025\\SQLEXPRESS;Database=MyDatabase;Trusted_Connection=yes;\n\n# SQL Auth:\nDriver={ODBC Driver 17 for SQL Server};Server=WS2025\\SQLEXPRESS;Database=MyDatabase;UID=odbc_app;PWD=P@ssw0rd_Strong!;\n\n# ระบุ port ตรงๆ (ถ้าไม่ใช่ 1433):\nDriver={ODBC Driver 17 for SQL Server};Server=192.168.1.10,14330;Database=MyDatabase;Trusted_Connection=yes;\n\n# === ทดสอบ connection string จาก PowerShell ===\n$conn = New-Object System.Data.Odbc.OdbcConnection\n$conn.ConnectionString = \"DSN=MyAppDB;\"\n$conn.Open()\nWrite-Host $conn.State   # ต้องได้ Open\n$conn.Close()",
+                lang: "bash",
+                note: "Connection string แบบ DSN-less สะดวกกว่าสำหรับ app ที่ deploy หลายเครื่อง เพราะไม่ต้องสร้าง DSN บนทุกเครื่อง แค่เปลี่ยน string ในไฟล์ config ได้เลย",
+            },
+            {
+                title: "Troubleshoot — ปัญหาที่พบบ่อย",
+                body: "รวม checklist แก้ปัญหา ODBC connection ที่เจอบ่อยใน Windows environment",
+                code: "# ========================================\n# Error: \"Data source name not found\"\n# ========================================\n# → DSN สร้างใน ODBC ผิด bitness กับ app\n# ตรวจ: app เป็น 32 หรือ 64-bit แล้วไปสร้าง DSN ในตัวที่ตรง\n# ทางลัด 32-bit: %SystemRoot%\\SysWOW64\\odbcad32.exe\n\n# ========================================\n# Error: \"Cannot connect to server\" / [08001]\n# ========================================\n# → ตรวจตามลำดับ:\n# 1. ping server IP ได้ไหม?\n#    ping 192.168.1.10\n# 2. port เปิดอยู่ไหม?\n#    Test-NetConnection 192.168.1.10 -Port 1433\n# 3. SQL Browser service รันอยู่ไหม? (จำเป็นสำหรับ named instance)\n#    services.msc → SQL Server Browser → ต้องเป็น Running\n# 4. TCP/IP เปิดใน SQL Server Configuration Manager หรือยัง?\n\n# ========================================\n# Error: \"Login failed\" / [28000]\n# ========================================\n# → ตรวจ SQL Server authentication mode\n# SSMS → server → Properties → Security\n# ต้องเป็น \"SQL Server and Windows Authentication mode\"\n# ถ้าเป็น \"Windows Authentication mode only\" → SQL login ใช้ไม่ได้\n# หลังเปลี่ยน mode ต้อง restart SQL Server service\n\n# ========================================\n# Named Instance หา port ไม่เจอ\n# ========================================\n# SQL Server Browser ต้องรันอยู่ถึงจะ resolve instance name ได้\n# ถ้าปิด Browser อยู่ ให้ระบุ port ตรงๆ แทน:\n# Server: 192.168.1.10,1433  (IP,port)\n# Server: WS2025,1433",
+                lang: "bash",
+                note: "SQL Server Browser service เป็นสิ่งที่ลืมเปิดบ่อยที่สุด — ถ้าใช้ named instance (เช่น SERVER\\SQLEXPRESS) และ connect ไม่ได้ ให้เช็ค SQL Server Browser ก่อนเลย",
+            },
+        ],
+    },
+
     // Windows Event Viewer อ่านเป็น
     // Audit Log — ใคร login, ใครลบไฟล์
 
