@@ -2992,9 +2992,58 @@ alias sstatus='sudo systemctl status'`,
         ],
     },
 
-    // Troubleshooting
-
-    // Network troubleshoot — ping, tracert, nslookup, Wireshark
+    {
+        id: 35, slug: "network-troubleshoot-ping-tracert-nslookup-wireshark", category: "infrastructure",
+        title: "Network Troubleshoot — ping, tracert, nslookup, Wireshark",
+        description: "วิธีหา root cause ปัญหาเครือข่ายอย่างมีระบบ: ตรวจ connectivity ด้วย ping, หา bottleneck ด้วย tracert, debug DNS ด้วย nslookup และ capture packet ด้วย Wireshark เมื่อ tool พื้นฐานไม่พอ",
+        difficulty: "intermediate", time: "30 min",
+        tags: ["Network", "ping", "tracert", "nslookup", "Wireshark", "Troubleshooting"], updated: "May 2025",
+        prerequisites: ["Windows หรือ Linux machine ที่มีปัญหา network", "Wireshark ติดตั้งไว้ (download จาก wireshark.org) สำหรับ step สุดท้าย"],
+        steps: [
+            {
+                title: "ping — ตรวจ Connectivity และ Latency",
+                body: "ping เป็น tool แรกที่ควรรันเสมอ บอกได้ว่าปลายทาง reachable ไหม latency เท่าไหร่ และมี packet loss หรือเปล่า",
+                code: "# === Windows ===\n# ping ปกติ (4 ครั้ง)\nping 8.8.8.8\nping google.com\n\n# ping ต่อเนื่อง (เหมือน -f ใน Linux)\nping -t 8.8.8.8\n# Ctrl+C เพื่อหยุด แล้วดูสรุปที่ท้าย\n\n# ping จำนวนครั้งที่กำหนด\nping -n 100 8.8.8.8\n\n# ping พร้อมตั้งค่า packet size (ทดสอบ MTU)\nping -l 1472 -f 8.8.8.8   # -f = Don't Fragment\n# ถ้าได้ 'Packet needs to be fragmented' → MTU ต่ำกว่า 1500\n\n# === วิเคราะห์ผล ===\n# Reply from X.X.X.X: bytes=32 time=5ms TTL=55\n# time < 1ms   → same subnet\n# time 1-20ms  → LAN / datacenter\n# time 20-80ms → same country\n# time > 200ms → overseas หรือมีปัญหา\n# Request timed out → firewall block หรือ host down\n# Destination host unreachable → no route to host\n\n# === Linux / macOS ===\nping -c 10 8.8.8.8          # 10 ครั้ง\nping -i 0.2 -c 50 8.8.8.8   # ส่งทุก 0.2 วินาที",
+                lang: "bash",
+                note: "timeout ไม่ได้แปลว่า host down เสมอไป — server บางตัว (เช่น Windows Server) disable ICMP response ที่ firewall ถ้า ping ไม่ได้แต่ service อื่นยังใช้ได้ ให้ตรวจ firewall rule ก่อน",
+            },
+            {
+                title: "tracert / traceroute — หา Bottleneck และ Routing Path",
+                body: "tracert แสดงทุก hop จากต้นทางถึงปลายทาง ช่วยบอกว่าปัญหาอยู่ที่ตรงไหน — เครือข่ายภายใน, ISP, หรือฝั่งปลายทาง",
+                code: "# === Windows ===\ntracert google.com\ntracert -d 8.8.8.8   # -d ไม่ resolve hostname (เร็วกว่า)\n\n# === Linux / macOS ===\ntraceroute google.com\ntraceroute -n 8.8.8.8      # ไม่ resolve hostname\ntraceroute --tcp -p 443 google.com  # ใช้ TCP แทน ICMP (ผ่าน firewall ได้มากกว่า)\n\n# === อ่านผล tracert ===\n# Tracing route to google.com [142.250.x.x]\n# 1    1 ms    1 ms    1 ms  192.168.1.1        ← default gateway\n# 2    5 ms    5 ms    5 ms  10.100.0.1         ← ISP edge router\n# 3   15 ms   15 ms   16 ms  203.0.113.1        ← ISP backbone\n# 4    *        *        *   Request timed out  ← ไม่ตอบ ICMP แต่อาจยัง forward ได้\n# 5   30 ms   30 ms   30 ms  142.250.x.x        ← ถึงปลายทาง\n\n# สัญญาณผิดปกติ:\n# * * * ทุก hop หลังจุดหนึ่ง → connection ขาดตรงนั้น\n# latency กระโดดสูงมากที่ hop ใดหนึ่ง → bottleneck อยู่ hop นั้น\n# hop ย้อนกลับ (เช่น 15ms → 5ms → 50ms) → asymmetric routing\n\n# pathping (Windows) — รวม ping + tracert ให้ค่าสถิติละเอียดกว่า\npathping -n google.com",
+                lang: "bash",
+                note: "* * * (timeout) ใน hop กลางๆ ไม่ใช่ปัญหา — router บางตัวปิด ICMP TTL exceeded แต่ยัง forward packet ต่อได้ ให้ดูว่า hop หลังจากนั้นตอบกลับมาไหม ถ้าตอบแสดงว่า routing ยังทำงานอยู่",
+            },
+            {
+                title: "nslookup / Resolve-DnsName — Debug DNS",
+                body: "nslookup ใช้ตรวจว่า DNS resolve ชื่อเป็น IP ถูกต้องไหม และ DNS server ไหนที่ตอบคำถาม",
+                code: "# === Windows: nslookup ===\n# query แบบง่าย\nnslookup google.com\n\n# ระบุ DNS server ที่ต้องการถาม (bypass OS DNS)\nnslookup google.com 8.8.8.8\nnslookup google.com 192.168.1.1   # ถามตรง router/local DNS\n\n# query record type อื่นๆ\nnslookup -type=MX gmail.com\nnslookup -type=TXT google.com\nnslookup -type=PTR 8.8.8.8        # reverse DNS\n\n# === Windows: Resolve-DnsName (PowerShell — ดีกว่า nslookup) ===\nResolve-DnsName google.com\nResolve-DnsName google.com -Server 8.8.8.8   # ระบุ DNS server\nResolve-DnsName google.com -Type MX\n\n# ล้าง DNS cache (ก่อนทดสอบใหม่)\nipconfig /flushdns\n\n# ดู DNS cache ปัจจุบัน\nipconfig /displaydns\n\n# === Linux / macOS: dig ===\ndig google.com\ndig google.com @8.8.8.8          # ถาม DNS server ที่กำหนด\ndig -x 8.8.8.8                   # reverse lookup\ndig MX gmail.com +short          # เฉพาะ answer\ndig google.com +trace             # trace ตั้งแต่ root DNS\n\n# flush DNS cache Linux:\nsudo systemd-resolve --flush-caches\n# macOS:\nsudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder",
+                lang: "bash",
+                note: "ถ้า nslookup ได้ IP ถูก แต่ browser เข้าไม่ได้ → ปัญหาไม่ใช่ DNS แล้ว ให้ตรวจ firewall, port, TLS certificate หรือ application layer แทน",
+            },
+            {
+                title: "เครื่องมือเพิ่มเติม — netstat, Test-NetConnection, arp",
+                body: "tool เหล่านี้ช่วย debug ได้ละเอียดขึ้นเมื่อ ping/tracert ไม่พอ",
+                code: "# ตรวจว่า port เปิดอยู่ไหม (Windows PowerShell)\nTest-NetConnection 192.168.1.10 -Port 1433   # SQL Server\nTest-NetConnection google.com   -Port 443    # HTTPS\n# TcpTestSucceeded : True → port เปิดและรับ connection\n# TcpTestSucceeded : False → port ปิด หรือ firewall block\n\n# ดู network connection ที่ active อยู่\nnetstat -an           # ทุก connection\nnetstat -ano          # บวก PID ด้วย\nnetstat -b            # บวก process name (ต้อง Admin)\n# State LISTENING → service รอรับ connection\n# State ESTABLISHED → มี connection อยู่แล้ว\n# State TIME_WAIT → connection กำลัง close\n\n# ดู ARP table (IP ↔ MAC)\narp -a\n# ถ้าเห็น IP เดิม map กับ MAC ผิด → ARP spoofing หรือ IP conflict\n\n# ตรวจ IP conflict\n# Windows: หา Event ID 4199 ใน System log\nGet-WinEvent -FilterHashtable @{LogName='System';Id=4199} -MaxEvents 5\n\n# ดู routing table\nroute print          # Windows\nip route show        # Linux\nnetstat -rn          # ทั้งสอง OS\n\n# ดู network adapter และ IP\nipconfig /all        # Windows\nip addr show         # Linux\nifconfig             # macOS",
+                lang: "bash",
+                note: "Test-NetConnection ดีกว่า telnet (ที่ต้องติดตั้งแยก) มาก — ใช้ได้เลยบน Windows 8.1+ และ Windows Server 2012+ โดยไม่ต้องติดตั้งอะไรเพิ่ม",
+            },
+            {
+                title: "Wireshark — Capture และวิเคราะห์ Packet",
+                body: "ใช้ Wireshark เมื่อ tool พื้นฐานไม่พอ เช่น เชื่อมต่อได้แต่ data ไม่ถูก, TLS error, หรือต้องการดูว่า packet จริงๆ ส่งอะไรไป",
+                code: "# ขั้นตอน Capture ใน Wireshark:\n# 1. เปิด Wireshark ในฐานะ Administrator\n# 2. เลือก network interface (เช่น Ethernet หรือ Wi-Fi)\n# 3. กด Start capture (ปุ่มฉลามสีน้ำเงิน)\n# 4. ทำสิ่งที่ต้องการ reproduce ปัญหา\n# 5. กด Stop แล้ว analyze\n\n# Display Filter ที่ใช้บ่อย:\n# ip.addr == 192.168.1.10          → traffic ของ IP นั้น\n# ip.dst == 192.168.1.10           → เฉพาะ traffic ขาเข้า\n# tcp.port == 1433                 → SQL Server traffic\n# tcp.port == 443                  → HTTPS\n# dns                              → DNS traffic ทั้งหมด\n# dns.qry.name == \"google.com\"     → DNS query ของ domain นั้น\n# http.response.code == 500        → HTTP 500 error\n# tcp.flags.syn == 1               → TCP SYN packet (เริ่ม connection)\n# tcp.flags.reset == 1             → TCP RST (connection ถูก reset)\n# icmp                             → ping traffic\n# !arp && !dns                     → ซ่อน noise\n\n# สิ่งที่ต้องสังเกตใน Wireshark:\n# TCP RST  → ปลายทาง reject connection (port ปิดหรือ firewall)\n# Retransmission ถี่ → packet loss\n# TLS Alert (fatal) → certificate หรือ cipher mismatch\n# ICMP Unreachable  → no route หรือ firewall drop\n# DNS NXDOMAIN      → ชื่อ domain ไม่มีอยู่\n\n# Capture ด้วย command line (ไม่มี GUI)\ntshark -i Ethernet -w C:\\capture.pcap\ntshark -i Ethernet -f \"port 1433\" -w C:\\sql-capture.pcap\n# เปิดไฟล์ .pcap ทีหลังใน Wireshark GUI",
+                lang: "bash",
+                note: "ถ้าเครื่อง target ไม่สามารถติดตั้ง Wireshark ได้ ให้ capture ที่ switch port mirroring หรือใช้ netsh trace บน Windows: netsh trace start capture=yes tracefile=C:\\trace.etl — แล้วเปิดไฟล์ .etl ด้วย Microsoft Message Analyzer หรือแปลงเป็น .pcap",
+            },
+            {
+                title: "Framework การ Troubleshoot — ลำดับการตรวจที่ถูกต้อง",
+                body: "การ troubleshoot network อย่างมีระบบ ตรวจจากชั้น physical ขึ้นมา application ไม่ใช่เดา",
+                code: "# OSI Troubleshoot จากล่างขึ้นบน:\n\n# Layer 1 — Physical\n# ดูสายเชื่อมอยู่ไหม, link light ติดไหม\nGet-NetAdapter | Select Name, Status, LinkSpeed\n\n# Layer 2 — Data Link\n# IP conflict? ARP ถูกต้องไหม?\narp -a\nGet-WinEvent -FilterHashtable @{LogName='System';Id=4199} -MaxEvents 5\n\n# Layer 3 — Network\n# ping gateway ได้ไหม?\nping 192.168.1.1\n# route ถูกต้องไหม?\nroute print\n\n# Layer 3-4 — Routing + Transport\n# tracert ไปถึงที่ไหน? port เปิดไหม?\ntracert -d 8.8.8.8\nTest-NetConnection 192.168.1.10 -Port 443\n\n# Layer 7 — Application / DNS\n# DNS resolve ถูกไหม?\nResolve-DnsName problematic-hostname.com -Server 8.8.8.8\n# ถ้า DNS ถูกแต่ยังเข้าไม่ได้ → ปัญหาอยู่ที่ application/TLS\n\n# ==============================\n# Checklist สรุป:\n# ==============================\n# 1. ping gateway (192.168.1.1)\n# 2. ping DNS server (8.8.8.8)\n# 3. nslookup hostname → ได้ IP ถูกต้องไหม\n# 4. ping IP ปลายทางตรงๆ (bypass DNS)\n# 5. Test-NetConnection IP -Port XXX → port เปิดไหม\n# 6. tracert → ขาดที่ hop ไหน\n# 7. Wireshark → ถ้ายังหาสาเหตุไม่ได้",
+                lang: "powershell",
+                note: "ข้ามขั้นตอน OSI จะทำให้เสียเวลา — เจอปัญหา 'เข้า website ไม่ได้' บ่อยที่สุดคือ DNS ผิด (Layer 7) ไม่ใช่ network ขาด ให้ ping IP ตรงๆ ก่อนเสมอเพื่อแยกว่าปัญหาคือ DNS หรือ connectivity",
+            },
+        ],
+    },
     // SQL Server ช้า — หา slow query + missing index
 
 
