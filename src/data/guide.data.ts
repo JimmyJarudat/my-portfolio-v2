@@ -3044,7 +3044,58 @@ alias sstatus='sudo systemctl status'`,
             },
         ],
     },
-    // SQL Server ช้า — หา slow query + missing index
+    {
+        id: 36, slug: "sql-server-slow-query-missing-index", category: "infrastructure",
+        title: "SQL Server ช้า — หา Slow Query + Missing Index",
+        description: "วิธีหาต้นเหตุที่ SQL Server ช้าอย่างมีระบบ: ดู active query ที่กิน resource, หา slow query ด้วย Query Store และ DMV, อ่าน Execution Plan และ apply missing index suggestion",
+        difficulty: "intermediate", time: "40 min",
+        tags: ["SQL Server", "Performance", "Query Store", "Execution Plan", "Index", "DMV"], updated: "May 2025",
+        prerequisites: ["SQL Server Management Studio (SSMS)", "สิทธิ์ VIEW SERVER STATE หรือ sysadmin", "SQL Server 2016+ สำหรับ Query Store feature"],
+        steps: [
+            {
+                title: "ดู Active Query ที่กำลังรันอยู่ตอนนี้",
+                body: "เมื่อ SQL Server ช้าฉับพลัน ให้ดู query ที่รันอยู่ตอนนั้นก่อน หา query ที่กิน CPU สูงหรือรอ resource",
+                code: "-- ดู session ที่ active พร้อม query text และ wait type\nSELECT\n    r.session_id,\n    r.status,\n    r.blocking_session_id,\n    r.wait_type,\n    r.wait_time / 1000.0        AS wait_sec,\n    r.cpu_time / 1000.0         AS cpu_sec,\n    r.total_elapsed_time / 1000.0 AS elapsed_sec,\n    r.logical_reads,\n    DB_NAME(r.database_id)      AS db_name,\n    s.login_name,\n    s.host_name,\n    SUBSTRING(t.text, (r.statement_start_offset/2)+1,\n        ((CASE r.statement_end_offset\n            WHEN -1 THEN DATALENGTH(t.text)\n            ELSE r.statement_end_offset END\n         - r.statement_start_offset)/2)+1) AS current_statement\nFROM sys.dm_exec_requests r\nJOIN sys.dm_exec_sessions  s ON r.session_id = s.session_id\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t\nWHERE r.session_id > 50       -- ข้าม system session\n  AND r.session_id <> @@SPID  -- ข้าม query นี้\nORDER BY r.total_elapsed_time DESC;",
+                lang: "sql",
+                note: "ดู blocking_session_id ถ้ามีค่า (ไม่ใช่ 0 หรือ NULL) แปลว่า session นั้นถูก block โดย session อื่น — ให้ตามหา session ต้นเหตุของ blocking chain",
+            },
+            {
+                title: "หา Blocking Chain — Query ที่ Lock กันอยู่",
+                body: "Blocking คือสาเหตุอันดับหนึ่งที่ทำให้ SQL Server ช้าฉับพลัน session หนึ่ง lock resource และ session อื่นต้องรอ",
+                code: "-- หา blocking chain ทั้งหมด\nWITH BlockingChain AS (\n    SELECT\n        s.session_id,\n        s.blocking_session_id,\n        s.login_name,\n        s.host_name,\n        s.status,\n        r.wait_type,\n        r.wait_time / 1000.0 AS wait_sec,\n        SUBSTRING(t.text, 1, 200) AS query_snippet\n    FROM sys.dm_exec_sessions s\n    LEFT JOIN sys.dm_exec_requests r ON s.session_id = r.session_id\n    OUTER APPLY sys.dm_exec_sql_text(\n        ISNULL(r.sql_handle, s.most_recent_sql_handle)\n    ) t\n    WHERE s.is_user_process = 1\n)\nSELECT * FROM BlockingChain\nWHERE session_id IN (\n    SELECT session_id         FROM BlockingChain\n    UNION\n    SELECT blocking_session_id FROM BlockingChain WHERE blocking_session_id IS NOT NULL\n)\nORDER BY blocking_session_id, session_id;\n\n-- Kill session ที่ block คนอื่น (ทำเมื่อจำเป็นเท่านั้น)\n-- KILL 55;   -- แทน 55 ด้วย session_id จริง\n\n-- ดู lock ที่ active อยู่\nSELECT\n    resource_type, resource_database_id,\n    resource_associated_entity_id,\n    request_mode, request_status, request_session_id\nFROM sys.dm_tran_locks\nWHERE resource_type <> 'DATABASE'\nORDER BY request_session_id;",
+                lang: "sql",
+                note: "ก่อน KILL session ให้ตรวจก่อนว่า session นั้นรัน transaction อะไรอยู่ — KILL จะ rollback transaction ทั้งหมด ซึ่งอาจใช้เวลานานถ้า transaction ใหญ่",
+            },
+            {
+                title: "Query Store — หา Slow Query จากประวัติ",
+                body: "Query Store บันทึก query และ execution stats ทุกครั้งที่รัน ช่วยหา query ที่ช้าที่สุดในช่วงเวลาที่กำหนดได้โดยไม่ต้องรอ reproduce",
+                code: "-- เปิด Query Store (ถ้ายังไม่เปิด)\nALTER DATABASE YourDatabase SET QUERY_STORE = ON;\nALTER DATABASE YourDatabase SET QUERY_STORE (\n    OPERATION_MODE = READ_WRITE,\n    MAX_STORAGE_SIZE_MB = 1024,\n    QUERY_CAPTURE_MODE = AUTO\n);\n\n-- หา top 20 query ที่ใช้เวลา CPU สูงสุดเฉลี่ย (24 ชั่วโมงล่าสุด)\nSELECT TOP 20\n    qt.query_sql_text,\n    q.query_id,\n    rs.avg_cpu_time / 1000.0         AS avg_cpu_ms,\n    rs.avg_duration / 1000.0         AS avg_duration_ms,\n    rs.avg_logical_io_reads,\n    rs.count_executions,\n    rs.avg_cpu_time * rs.count_executions / 1000.0 AS total_cpu_ms\nFROM sys.query_store_query      q\nJOIN sys.query_store_query_text qt ON q.query_text_id = qt.query_text_id\nJOIN sys.query_store_plan        p ON q.query_id      = p.query_id\nJOIN sys.query_store_runtime_stats rs ON p.plan_id   = rs.plan_id\nJOIN sys.query_store_runtime_stats_interval ri\n     ON rs.runtime_stats_interval_id = ri.runtime_stats_interval_id\nWHERE ri.start_time >= DATEADD(HOUR, -24, GETUTCDATE())\nORDER BY rs.avg_cpu_time DESC;\n\n-- ใน SSMS ดูได้ผ่าน GUI:\n-- Database → Query Store → Top Resource Consuming Queries",
+                lang: "sql",
+                note: "Query Store ใช้ GETUTCDATE() ไม่ใช่ GETDATE() — ถ้า server อยู่ timezone +7 ต้องลบ 7 ชั่วโมงออกจาก filter เวลา: DATEADD(HOUR, -31, GETUTCDATE())",
+            },
+            {
+                title: "หา Slow Query ด้วย DMV (ไม่มี Query Store)",
+                body: "สำหรับ SQL Server เวอร์ชันเก่าหรือ database ที่ไม่ได้เปิด Query Store ใช้ DMV sys.dm_exec_query_stats ได้ (แต่ clear เมื่อ SQL Server restart)",
+                code: "-- Top 20 query ที่ใช้ CPU สูงสุดสะสมตั้งแต่ restart\nSELECT TOP 20\n    qs.total_cpu_time / 1000              AS total_cpu_ms,\n    qs.execution_count,\n    qs.total_cpu_time / qs.execution_count / 1000 AS avg_cpu_ms,\n    qs.total_elapsed_time / qs.execution_count / 1000 AS avg_elapsed_ms,\n    qs.total_logical_reads / qs.execution_count AS avg_logical_reads,\n    SUBSTRING(qt.text,\n        (qs.statement_start_offset/2)+1,\n        ((CASE qs.statement_end_offset\n            WHEN -1 THEN DATALENGTH(qt.text)\n            ELSE qs.statement_end_offset END\n          - qs.statement_start_offset)/2)+1\n    ) AS query_text,\n    DB_NAME(qt.dbid) AS database_name,\n    qp.query_plan\nFROM sys.dm_exec_query_stats qs\nCROSS APPLY sys.dm_exec_sql_text(qs.sql_handle)  qt\nCROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) qp\nORDER BY qs.total_cpu_time DESC;\n\n-- หา query ที่ logical reads สูงสุด (I/O bound)\nSELECT TOP 10\n    total_logical_reads / execution_count AS avg_reads,\n    execution_count,\n    SUBSTRING(qt.text, 1, 300) AS query_snippet\nFROM sys.dm_exec_query_stats qs\nCROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt\nORDER BY avg_reads DESC;",
+                lang: "sql",
+                note: "logical reads สูงกว่า physical reads เพราะ data ที่อยู่ใน buffer pool นับเป็น logical read — query ที่ logical reads สูงมักเป็นสัญญาณว่า missing index หรือ full table scan",
+            },
+            {
+                title: "อ่าน Execution Plan + หา Missing Index",
+                body: "Execution Plan บอกว่า SQL Server ทำงานยังไงกับ query นั้น — warning สีเหลืองและ table scan คือสัญญาณชัดเจนว่าต้องเพิ่ม index",
+                code: "-- เปิด Actual Execution Plan ใน SSMS: Ctrl+M แล้วรัน query\n-- หรือคลิกปุ่ม \"Include Actual Execution Plan\" ใน toolbar\n\n-- สิ่งที่ต้องดูใน Execution Plan:\n-- Table Scan / Clustered Index Scan → อ่านทั้ง table = ช้า\n-- Index Seek                        → ใช้ index ได้ = ดี\n-- Nested Loops / Hash Match / Merge Join → วิธี JOIN\n-- Warning (เครื่องหมาย !) → missing index, implicit conversion, memory spill\n-- Thick arrow ระหว่าง operator → row estimate สูง = transfer data เยอะ\n\n-- ดู Missing Index Suggestion จาก Execution Plan (XML)\nSELECT\n    migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans) AS impact_score,\n    migs.avg_user_impact,\n    migs.user_seeks,\n    migs.user_scans,\n    mid.statement AS table_name,\n    mid.equality_columns,\n    mid.inequality_columns,\n    mid.included_columns,\n    'CREATE INDEX IX_' +\n        REPLACE(REPLACE(mid.statement, '[', ''), ']', '') + '_' +\n        REPLACE(ISNULL(mid.equality_columns, '') +\n                ISNULL(mid.inequality_columns, ''), ', ', '_') +\n    ' ON ' + mid.statement +\n    ' (' + ISNULL(mid.equality_columns, '') +\n    CASE WHEN mid.inequality_columns IS NOT NULL\n         THEN CASE WHEN mid.equality_columns IS NOT NULL THEN ', ' ELSE '' END\n              + mid.inequality_columns ELSE '' END + ')' +\n    CASE WHEN mid.included_columns IS NOT NULL\n         THEN ' INCLUDE (' + mid.included_columns + ')' ELSE '' END\n    AS create_index_statement\nFROM sys.dm_db_missing_index_group_stats migs\nJOIN sys.dm_db_missing_index_groups      mig  ON migs.group_handle = mig.index_group_handle\nJOIN sys.dm_db_missing_index_details     mid  ON mig.index_handle  = mid.index_handle\nWHERE migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans) > 10\nORDER BY impact_score DESC;",
+                lang: "sql",
+                note: "Missing index DMV เสนอ index ทุกตัวที่ SQL Server คิดว่าช่วยได้ แต่ไม่ได้คำนึงถึง index ที่มีอยู่แล้วหรือ overhead ของ insert/update — อย่า apply ทุก suggestion โดยไม่ทดสอบ impact ก่อน",
+            },
+            {
+                title: "ตรวจสอบ Index และ Rebuild / Reorganize",
+                body: "Index ที่ fragmented สูงทำให้ query ช้าลงได้ ควรตรวจและ maintain index เป็นประจำ",
+                code: "-- ดู fragmentation ของ index ทุกตัวใน database\nSELECT\n    OBJECT_NAME(ips.object_id)     AS table_name,\n    i.name                         AS index_name,\n    ips.index_type_desc,\n    ips.avg_fragmentation_in_percent,\n    ips.page_count\nFROM sys.dm_db_index_physical_stats(\n    DB_ID(), NULL, NULL, NULL, 'LIMITED'\n) ips\nJOIN sys.indexes i\n     ON ips.object_id = i.object_id AND ips.index_id = i.index_id\nWHERE ips.page_count > 100       -- ข้าม index เล็กมาก\nORDER BY ips.avg_fragmentation_in_percent DESC;\n\n-- guideline:\n-- fragmentation < 10%  → ไม่ต้องทำอะไร\n-- fragmentation 10-30% → REORGANIZE (online, ไม่ lock)\n-- fragmentation > 30%  → REBUILD (ดีกว่า แต่ lock table ใน edition ต่ำ)\n\n-- Reorganize index (แก้ fragmentation เบาๆ, online)\nALTER INDEX IX_Orders_CustomerID ON dbo.Orders REORGANIZE;\n\n-- Rebuild index (rebuild ใหม่ทั้งหมด, ดีกว่า)\nALTER INDEX IX_Orders_CustomerID ON dbo.Orders REBUILD;\n\n-- Rebuild ทุก index ใน table\nALTER INDEX ALL ON dbo.Orders REBUILD;\n\n-- Rebuild แบบ Online (ไม่ block query — Enterprise/Developer edition เท่านั้น)\nALTER INDEX ALL ON dbo.Orders REBUILD WITH (ONLINE = ON);\n\n-- อัปเดต statistics หลัง rebuild (ปกติ rebuild ทำให้อัตโนมัติ)\nUPDATE STATISTICS dbo.Orders;",
+                lang: "sql",
+                note: "REBUILD ใน Standard Edition จะ lock table ระหว่าง rebuild ควรรันนอกเวลาทำงาน หรือใช้ SQL Server Agent Job รันตอนดึก — สำหรับ table ที่ใหญ่มากให้ใช้ REORGANIZE แทนเพื่อหลีกเลี่ยง lock",
+            },
+        ],
+    },
 
 
 
