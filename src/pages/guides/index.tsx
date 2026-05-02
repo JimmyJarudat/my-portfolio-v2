@@ -571,7 +571,7 @@ const GuidesPage = () => {
                         className="text-[15px] leading-relaxed max-w-lg"
                         style={{ color: "var(--text-muted)" }}
                     >
-                        สิ่งที่เจอจริง แก้จริง และใช้งานอยู่ — ครอบคลุมตั้งแต่ Linux, Docker, Windows Server ไปจนถึง Network และ Monitoring
+                        คู่มือจากงานที่เคยทำและแก้ปัญหาจริง ครอบคลุม Linux, Docker, Windows Server, Network และ Monitoring
                     </p>
                     <div className="flex items-center gap-6 mt-8">
                         {[
