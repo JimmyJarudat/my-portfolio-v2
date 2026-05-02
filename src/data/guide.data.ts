@@ -2892,8 +2892,58 @@ alias sstatus='sudo systemctl status'`,
         ],
     },
 
-    // Windows Event Viewer อ่านเป็น
-    // Audit Log — ใคร login, ใครลบไฟล์
+    {
+        id: 33, slug: "windows-event-viewer-audit-log", category: "infrastructure",
+        title: "Windows Event Viewer + Audit Log — ติดตามใคร Login ใครลบไฟล์",
+        description: "อ่าน Event Viewer ให้เป็น เปิด Audit Policy เพื่อบันทึก login/logout และการแก้ไขไฟล์ รู้จัก Event ID ที่สำคัญ และใช้ PowerShell query log ได้เร็วกว่าเปิด GUI",
+        difficulty: "intermediate", time: "30 min",
+        tags: ["Windows Server", "Event Viewer", "Audit Log", "Security", "PowerShell"], updated: "May 2025",
+        prerequisites: ["Windows Server หรือ Windows 10/11 ที่มีสิทธิ์ Administrator", "รู้จัก Group Policy / Local Security Policy เบื้องต้น"],
+        steps: [
+            {
+                title: "เปิด Event Viewer และทำความรู้จักโครงสร้าง",
+                body: "Event Viewer แบ่ง log เป็น channel หลักๆ สี่ตัว แต่ละตัวบันทึกเหตุการณ์คนละประเภท",
+                code: "# เปิด Event Viewer\n# Win+R → eventvwr.msc\n\n# โครงสร้างสำคัญ:\n# Windows Logs\n# ├── Application   → error/warning จาก application (SQL Server, IIS ฯลฯ)\n# ├── Security      → login, logout, audit ทุกอย่างที่เปิดไว้\n# ├── Setup         → event ระหว่างติดตั้ง Windows\n# ├── System        → event จาก Windows เอง (service, driver, hardware)\n# └── Forwarded Events → log ที่ส่งมาจากเครื่องอื่น\n\n# Applications and Services Logs\n# └── Microsoft → Windows → ... → log เฉพาะของแต่ละ feature\n\n# ทุก event มี:\n# Level:     Information / Warning / Error / Critical\n# Date/Time: เวลาที่เกิด\n# Source:    ระบบ/โปรแกรมที่บันทึก\n# Event ID:  รหัสประเภทเหตุการณ์ (ตัวสำคัญที่สุด)\n# Task:      หมวดหมู่ย่อย",
+                lang: "bash",
+                note: "Security log จะว่างเปล่าหรือมีน้อยมากถ้ายังไม่ได้เปิด Audit Policy — ต้องทำ step ถัดไปก่อน",
+            },
+            {
+                title: "เปิด Audit Policy — Local Security Policy",
+                body: "ค่า default ของ Windows ไม่บันทึก event ส่วนใหญ่ ต้องเปิด Audit Policy ก่อน ทำได้ทั้งแบบ Local (เครื่องเดียว) และ GPO (domain-wide)",
+                code: "# เปิด Local Security Policy\n# Win+R → secpol.msc\n# หรือ: Start → Local Security Policy\n\n# ไปที่: Local Policies → Audit Policy\n# ตั้งค่าที่แนะนำ:\n\n# Audit account logon events   → Success, Failure\n# Audit logon events           → Success, Failure\n# Audit account management     → Success, Failure\n# Audit object access          → Success, Failure  ← จำเป็นสำหรับ file audit\n# Audit policy change          → Success\n# Audit privilege use          → Failure\n# Audit process tracking       → (ปิดไว้ก่อน — log เยอะมาก)\n# Audit system events          → Success, Failure\n\n# สำหรับ Domain Controller ใช้ GPO แทน:\n# Group Policy Management → Default Domain Controllers Policy\n# Computer Configuration → Windows Settings → Security Settings\n# → Local Policies → Audit Policy\n\n# หรือใช้ Advanced Audit Policy (ละเอียดกว่า):\n# Security Settings → Advanced Audit Policy Configuration",
+                lang: "bash",
+                note: "เปิด Audit Policy แล้วอาจทำให้ Security log โตเร็วมาก โดยเฉพาะ Process Tracking — แนะนำให้เปิดเฉพาะที่ต้องการและตั้ง log size ให้เพียงพอ (ดู step ถัดไป)",
+            },
+            {
+                title: "ตั้งค่าขนาด Security Log",
+                body: "Security log มีขนาด default 20 MB ซึ่งเล็กมาก อาจ overwrite ทับก่อนที่จะได้ดู ควรเพิ่มให้เหมาะกับ environment",
+                code: "# GUI: Event Viewer → Windows Logs → Security\n# คลิกขวา → Properties\n# Maximum log size: เพิ่มเป็น 512 MB - 1 GB\n# When maximum log size is reached:\n#   → Overwrite events as needed   (สะดวกแต่ข้อมูลเก่าหาย)\n#   → Archive the log when full    (แนะนำสำหรับ compliance)\n\n# ตั้งผ่าน PowerShell (รันในฐานะ Administrator):\nLimit-EventLog -LogName Security -MaximumSize 512MB\n\n# หรือผ่าน wevtutil:\nwevtutil sl Security /ms:536870912   # 512 MB\n\n# ตรวจขนาดปัจจุบัน:\nwevtutil gl Security | findstr /i \"maxSize\"",
+                lang: "powershell",
+                note: "สำหรับ production server ที่ต้องเก็บ log ตาม compliance ควรใช้ Windows Event Forwarding ส่ง log ไปเก็บที่ central log server แทนการเก็บไว้เครื่องเดียว",
+            },
+            {
+                title: "Event ID ที่ต้องรู้ — Login / Logout",
+                body: "Event ID ใน Security log ที่บอกว่าใคร login เข้าระบบเมื่อไหร่ จากเครื่องไหน และ login สำเร็จหรือไม่",
+                code: "# Event ID สำคัญ — Login / Logout\n# 4624  Successful logon      → login สำเร็จ\n# 4625  Failed logon          → login ล้มเหลว (Failure Reason บอกสาเหตุ)\n# 4634  Logoff                → logout\n# 4647  User initiated logoff → user กด logoff เอง\n# 4648  Logon using explicit credentials → runas หรือ map drive\n# 4768  Kerberos TGT request  → login ผ่าน domain (DC เท่านั้น)\n# 4771  Kerberos pre-auth failed → password ผิดใน domain\n\n# Logon Type ใน Event 4624:\n# Type 2  → Interactive      (login ที่เครื่องโดยตรง)\n# Type 3  → Network          (map drive, UNC path)\n# Type 4  → Batch            (Scheduled Task)\n# Type 5  → Service          (Windows Service)\n# Type 7  → Unlock           (lock screen)\n# Type 10 → RemoteInteractive (RDP)\n# Type 11 → CachedInteractive (login offline ด้วย cached password)\n\n# ดู login ล้มเหลวล่าสุด 20 รายการ:\nGet-WinEvent -FilterHashtable @{LogName='Security'; Id=4625} -MaxEvents 20 |\n  Select-Object TimeCreated,\n    @{N='Account';E={$_.Properties[5].Value}},\n    @{N='WorkstationName';E={$_.Properties[13].Value}},\n    @{N='IPAddress';E={$_.Properties[19].Value}} |\n  Format-Table -AutoSize",
+                lang: "powershell",
+                note: "ถ้าเห็น 4625 เยอะผิดปกติจาก IP เดิมซ้ำๆ อาจเป็น brute force attack — ให้ดู IP Address ใน event แล้วพิจารณา block ที่ firewall",
+            },
+            {
+                title: "Event ID — ใครลบ / แก้ไขไฟล์ (Object Access Audit)",
+                body: "การดู audit ไฟล์ต้องทำสองขั้นตอน: เปิด Audit Policy (step 2) และเปิด SACL บน folder/file ที่ต้องการติดตาม",
+                code: "# ขั้นตอน: เปิด Auditing บน Folder\n# 1. คลิกขวา folder → Properties → Security → Advanced\n# 2. แท็บ Auditing → Add\n# 3. Principal: Everyone (หรือระบุ user/group)\n# 4. Type: All (Success + Failure)\n# 5. Basic permissions ที่ควรเปิด:\n#    - Delete subfolders and files\n#    - Delete\n#    - Change permissions\n#    - Take ownership\n\n# Event ID ที่เกิดขึ้นหลังเปิด SACL:\n# 4663  Object access attempt   → พยายาม read/write/delete\n#       (ดู Access Mask: 0x10000 = DELETE)\n# 4660  Object deleted\n# 4656  Handle to object requested\n# 4670  Permissions on object changed\n\n# PowerShell: ดูการลบไฟล์ใน Security log\nGet-WinEvent -FilterHashtable @{LogName='Security'; Id=4663} -MaxEvents 50 |\n  Where-Object { $_.Message -match 'DELETE' } |\n  Select-Object TimeCreated,\n    @{N='User';E={$_.Properties[1].Value}},\n    @{N='Object';E={$_.Properties[6].Value}},\n    @{N='Process';E={$_.Properties[11].Value}} |\n  Format-Table -AutoSize",
+                lang: "powershell",
+                note: "Object Access log จะล้น Security log ได้ง่ายมากถ้าเปิดบน folder ที่มีการเข้าถึงบ่อย — เปิดเฉพาะ folder สำคัญ เช่น share ส่วนกลาง หรือ folder เก็บเอกสารสำคัญเท่านั้น",
+            },
+            {
+                title: "กรอง Log และค้นหาด้วย PowerShell",
+                body: "GUI Event Viewer ช้าเมื่อ log มีปริมาณมาก การใช้ PowerShell ค้นหาตรงๆ เร็วกว่าและ script ได้",
+                code: "# ดู login ของ user คนใดคนหนึ่ง (แทน 'john' ด้วยชื่อ user)\nGet-WinEvent -FilterHashtable @{\n  LogName = 'Security'\n  Id      = 4624\n  StartTime = (Get-Date).AddDays(-7)\n} | Where-Object { $_.Properties[5].Value -eq 'john' } |\n  Select-Object TimeCreated,\n    @{N='LogonType';E={$_.Properties[8].Value}},\n    @{N='WorkstationName';E={$_.Properties[11].Value}} |\n  Format-Table -AutoSize\n\n# ดู event ช่วงเวลาที่กำหนด\nGet-WinEvent -FilterHashtable @{\n  LogName   = 'Security'\n  StartTime = '2025-05-01 08:00'\n  EndTime   = '2025-05-01 09:00'\n  Id        = @(4624, 4625)\n} | Format-List TimeCreated, Message\n\n# Export event เป็น CSV\nGet-WinEvent -FilterHashtable @{LogName='Security'; Id=4625} |\n  Select-Object TimeCreated,\n    @{N='Account';E={$_.Properties[5].Value}},\n    @{N='IP';E={$_.Properties[19].Value}} |\n  Export-Csv -Path C:\\Logs\\failed_logins.csv -NoTypeInformation\n\n# ดู event ใน System log — service crash\nGet-WinEvent -FilterHashtable @{\n  LogName = 'System'\n  Level   = 2   # 1=Critical, 2=Error, 3=Warning\n  StartTime = (Get-Date).AddHours(-24)\n} | Select-Object TimeCreated, Id, ProviderName, Message |\n  Format-Table -AutoSize -Wrap",
+                lang: "powershell",
+                note: "Get-WinEvent เร็วกว่า Get-EventLog มาก เพราะ query ที่ OS level ก่อน load ขึ้น memory — ใช้ FilterHashtable เสมอแทนการ pipe Where-Object เมื่อกรองด้วย LogName/Id/Time",
+            },
+        ],
+    },
 
 
     // Task Scheduler Automation
