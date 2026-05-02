@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Github, Video, ChevronLeft, ChevronRight } from "lucide-react";
-import { PROJECTS } from "./data/project.data";
+import { PROJECTS } from "../../data/project.data";
 import { ImageSlider } from "./components/ImageSlider";
 import { Lightbox } from "./components/Lightbox";
 

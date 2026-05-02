@@ -1,6 +1,6 @@
 // pages/GuidesPage.tsx
 import { useRef, useState } from "react";
-import { GUIDES } from "./data";
+import { GUIDES } from "../../data/guide.data";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
