@@ -1,5 +1,6 @@
 import { MdOutlineMail, MdPhone, MdLocationOn } from "react-icons/md";
 import { FaGithub, FaGlobe } from "react-icons/fa";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const CONTACTS = [
@@ -11,6 +12,9 @@ const CONTACTS = [
 
 // ─── About Page ───────────────────────────────────────────────────────────────
 const AboutPage = () => {
+    const { t } = useLanguage();
+    const a = t.about;
+
     return (
         <section className="min-h-full w-full">
             <div className="container mx-auto px-4 xl:px-0 py-12 xl:py-16">
@@ -18,7 +22,7 @@ const AboutPage = () => {
                 {/* ── Top bar: eyebrow + name full-width ── */}
                 <div className="mb-10">
                     <p className="text-accent text-[9px] font-mono tracking-[0.25em] uppercase mb-4">
-                        Who I Am
+                        {a.eyebrow}
                     </p>
 
                     {/* Name as large display — spans full width */}
@@ -32,7 +36,7 @@ const AboutPage = () => {
                         <div className="flex items-center gap-2 pb-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0 shadow-[0_0_6px_var(--accent)]" />
                             <span className="font-mono text-[10px] tracking-[0.22em] uppercase" style={{ color: "var(--text-muted)" }}>
-                                IT Specialist
+                                {a.title}
                             </span>
                         </div>
                     </div>
@@ -64,19 +68,13 @@ const AboutPage = () => {
 
                         {/* Bio paragraphs */}
                         <p className="font-mono text-[13px] leading-[1.9] mb-4" style={{ color: "var(--text-muted)" }}>
-                            ทำงานด้าน IT แบบครบวงจร ครอบคลุมทั้งการพัฒนาระบบและการดูแล infrastructure โดยมีความถนัดในการสร้างเครื่องมือและระบบที่ใช้งานได้จริงในองค์กร ตั้งแต่ internal application ไปจนถึงการบริหารจัดการ server, network และระบบ automation ต่าง ๆ มุ่งเน้นการออกแบบ solution ที่ใช้งานได้จริง ตรงโจทย์ และช่วยแก้ปัญหาได้อย่างมีประสิทธิภาพ
+                            {a.bio1}
                         </p>
                         <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
-                            สำเร็จการศึกษาจาก สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง
-                            คณะครุศาสตร์อุตสาหกรรมและเทคโนโลยี สาขาวิศวกรรมคอมพิวเตอร์
-
-                            พร้อมประสบการณ์ในสาย application development, database management, DevOps และ network infrastructure โดยมีแนวคิดว่าเทคโนโลยีที่ดีไม่ใช่เพียงแค่น่าสนใจในเชิงแนวคิด แต่ต้องสามารถช่วยให้ผู้ใช้งานทำงานได้ง่ายขึ้น และสร้างประโยชน์ได้จริงในชีวิตประจำวัน
+                            {a.bio2}
                         </p>
-
                         <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
-                            มี background ด้าน Electronics จากการศึกษาและประสบการณ์สอน Microcontrollers
-                            ที่วิทยาลัยเทคนิคชลบุรี ซึ่งช่วยให้เข้าใจ hardware และ infrastructure
-                            ได้ลึกกว่านักพัฒนาทั่วไป และสามารถมองปัญหาได้ครบทั้งในมุม software และ physical layer
+                            {a.bio3}
                         </p>
 
                         {/* Divider */}
@@ -84,7 +82,7 @@ const AboutPage = () => {
 
                         {/* Contact label */}
                         <p className="text-accent text-[9px] font-mono tracking-[0.22em] uppercase mb-4">
-                            Contact
+                            {a.contact}
                         </p>
 
                         {/* Contact — vertical list style แทน pills */}
