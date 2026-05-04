@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import { getNotes } from "@/services/notesService";
 import { Pagination } from "@/components/Pagination";
 
 const NOTES_PER_PAGE = 10;
+type Language = "th" | "en";
 
 // ─── Tag colors ───────────────────────────────────────────────────────────────
 const TAG_COLORS: Record<string, string> = {
@@ -28,18 +30,28 @@ const TAG_COLORS: Record<string, string> = {
 const getTagClass = (tag: string) =>
   TAG_COLORS[tag] ?? "text-accent border-accent/30 bg-accent/5";
 
+const textFor = (language: Language, thText?: string, enText?: string) =>
+  language === "en" && enText?.trim() ? enText : thText ?? "";
+
 // ─── Note Detail (Article Layout) ─────────────────────────────────────────────
 const NoteDetail = ({
   note,
   border,
-  cardBg,
+  language,
+  backLabel,
   onBack,
 }: {
   note: Note;
   border: string;
-  cardBg: string;
+  language: Language;
+  backLabel: string;
   onBack: () => void;
-}) => (
+}) => {
+  const title = textFor(language, note.title, note.titleEn);
+  const subtitle = textFor(language, note.subtitle, note.subtitleEn);
+  const heroCaption = textFor(language, note.heroCaption, note.heroCaptionEn);
+
+  return (
   <div>
     {/* Back */}
     <button
@@ -47,7 +59,7 @@ const NoteDetail = ({
       className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide mb-8 hover:text-accent transition-colors"
       style={{ color: "var(--text-muted)" }}
     >
-      ← กลับ
+      {backLabel}
     </button>
 
     {/* Tags */}
@@ -64,10 +76,10 @@ const NoteDetail = ({
 
     {/* Title */}
     <h2 className="font-bold text-2xl xl:text-3xl mb-2 leading-snug" style={{ color: "var(--text)" }}>
-      {note.title}
+      {title}
     </h2>
     <p className="font-mono text-[13px] mb-2 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-      {note.subtitle}
+      {subtitle}
     </p>
     <p className="font-mono text-[10px] tracking-widest uppercase text-accent mb-8">
       {note.date} · {note.readTime} read
@@ -81,16 +93,16 @@ const NoteDetail = ({
       >
         <img
           src={note.heroImage}
-          alt={note.title}
+          alt={title}
           className="w-full object-cover max-h-72"
           loading="lazy"
         />
-        {note.heroCaption && (
+        {heroCaption && (
           <p
             className="font-mono text-[10px] px-4 py-2"
             style={{ color: "var(--text-muted)", borderTop: `1px solid ${border}` }}
           >
-            📷 {note.heroCaption}
+            📷 {heroCaption}
           </p>
         )}
       </div>
@@ -101,12 +113,16 @@ const NoteDetail = ({
 
     {/* Sections */}
     <div className="space-y-8">
-      {note.sections.map((s, i) => (
+      {note.sections.map((s, i) => {
+        const heading = textFor(language, s.heading, s.headingEn);
+        const body = textFor(language, s.body, s.bodyEn);
+
+        return (
         <div key={i}>
           {/* Section heading */}
           <div className="flex items-center gap-3 mb-3">
             <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-accent whitespace-nowrap">
-              {s.heading}
+              {heading}
             </p>
             <div className="flex-1 h-px" style={{ background: border }} />
           </div>
@@ -121,7 +137,7 @@ const NoteDetail = ({
                 className="font-mono text-[13px] leading-relaxed whitespace-pre-line"
                 style={{ color: "var(--text-muted)" }}
               >
-                {s.body}
+                {body}
               </p>
             </div>
           ) : (
@@ -130,7 +146,7 @@ const NoteDetail = ({
                 className="font-mono text-[13px] leading-relaxed whitespace-pre-line"
                 style={{ color: "var(--text-muted)" }}
               >
-                {s.body}
+                {body}
               </p>
 
               {/* Section inline image */}
@@ -141,7 +157,7 @@ const NoteDetail = ({
                 >
                   <img
                     src={s.image}
-                    alt={s.heading}
+                    alt={heading}
                     className="w-full object-cover max-h-56"
                     loading="lazy"
                   />
@@ -161,10 +177,12 @@ const NoteDetail = ({
             </>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   </div>
-);
+  );
+};
 
 
 
@@ -175,6 +193,8 @@ const getNoteSlugFromURL = () =>
 // ─── Tech Notes Page ──────────────────────────────────────────────────────────
 const TechNotesPage = () => {
   const { theme } = useTheme();
+  const { language, t } = useLanguage();
+  const noteText = t.techNote;
   const isDark = theme === "dark";
   const [notes, setNotes] = useState<Note[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,8 +217,8 @@ const TechNotesPage = () => {
   const filteredNotes = q
     ? notes.filter(
         (n) =>
-          n.title.toLowerCase().includes(q) ||
-          n.subtitle.toLowerCase().includes(q) ||
+          textFor(language, n.title, n.titleEn).toLowerCase().includes(q) ||
+          textFor(language, n.subtitle, n.subtitleEn).toLowerCase().includes(q) ||
           n.tags.some((t) => t.toLowerCase().includes(q))
       )
     : notes;
@@ -266,7 +286,7 @@ const TechNotesPage = () => {
         {/* ── Header ── */}
         <div className="mb-10">
           <p className="text-accent text-[10px] font-mono tracking-[0.22em] uppercase mb-2">
-            Things I Learned
+            {noteText.eyebrow}
           </p>
           <h1 className="h1" style={{ color: "var(--text)" }}>
             Tech Notes.<span className="text-accent">.</span>
@@ -277,7 +297,8 @@ const TechNotesPage = () => {
           <NoteDetail
             note={selectedNote}
             border={border}
-            cardBg={cardBg}
+            language={language}
+            backLabel={noteText.back}
             onBack={closeNote}
           />
         ) : (
@@ -287,7 +308,7 @@ const TechNotesPage = () => {
               className="font-mono text-[13px] leading-relaxed mb-8 max-w-xl"
               style={{ color: "var(--text-muted)" }}
             >
-              บันทึกสิ่งที่เรียนรู้จากการทำงานจริง — ปัญหาที่เจอ วิธีที่แก้ และสิ่งที่อยากจำไว้
+              {noteText.intro}
             </p>
 
             {/* ── Search box ── */}
@@ -302,7 +323,7 @@ const TechNotesPage = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="ค้นหา title, tag…"
+                placeholder={noteText.searchPlaceholder}
                 className="w-full font-mono text-[12px] pl-8 pr-8 py-2 rounded-lg border bg-transparent outline-none transition-all duration-150 focus:border-accent/60 placeholder:opacity-40"
                 style={{
                   borderColor: border,
@@ -327,8 +348,8 @@ const TechNotesPage = () => {
                 style={{ color: "var(--text-muted)" }}
               >
                 {q
-                  ? `พบ ${filteredNotes.length} จาก ${notes.length} notes`
-                  : `${notes.length} notes · หน้า ${currentPage} / ${totalPages}`}
+                  ? `${noteText.countFound} ${filteredNotes.length} ${noteText.countFrom} ${notes.length} ${noteText.notes}`
+                  : `${notes.length} ${noteText.notes} · ${noteText.page} ${currentPage} / ${totalPages}`}
               </p>
             )}
 
@@ -338,12 +359,15 @@ const TechNotesPage = () => {
                 className="font-mono text-[13px] py-16 text-center"
                 style={{ color: "var(--text-muted)" }}
               >
-                ไม่พบ note ที่ตรงกับ &ldquo;{search}&rdquo;
+                {noteText.notFound} &ldquo;{search}&rdquo;
               </p>
             ) : (
               <div className="flex flex-col gap-4">
                 {paginatedNotes.map((note, idx) => {
                   const globalIndex = (currentPage - 1) * NOTES_PER_PAGE + idx + 1;
+                  const title = textFor(language, note.title, note.titleEn);
+                  const subtitle = textFor(language, note.subtitle, note.subtitleEn);
+
                   return (
                     <div
                       key={note.id}
@@ -377,13 +401,13 @@ const TechNotesPage = () => {
                             className="font-bold text-[15px] mb-1.5 group-hover:text-accent transition-colors leading-snug"
                             style={{ color: "var(--text)" }}
                           >
-                            {note.title}
+                            {title}
                           </h3>
                           <p
                             className="font-mono text-[12px] leading-relaxed mb-4"
                             style={{ color: "var(--text-muted)" }}
                           >
-                            {note.subtitle}
+                            {subtitle}
                           </p>
                         </div>
 
@@ -395,7 +419,7 @@ const TechNotesPage = () => {
                           >
                             <img
                               src={note.heroImage}
-                              alt={note.title}
+                              alt={title}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
@@ -412,7 +436,7 @@ const TechNotesPage = () => {
                           {note.date} · {note.readTime} read
                         </span>
                         <span className="font-mono text-[11px] text-accent opacity-0 group-hover:opacity-100 transition-opacity">
-                          อ่านบทความ →
+                          {noteText.readMore}
                         </span>
                       </div>
                     </div>

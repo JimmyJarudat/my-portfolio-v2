@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Globe, Github, Video, ChevronLeft, ChevronRight } from "lucide-react";
-import { PROJECTS } from "./data/project.data";
+import { PROJECTS } from "../../data/project.data";
 import { ImageSlider } from "./components/ImageSlider";
 import { Lightbox } from "./components/Lightbox";
 
@@ -15,6 +16,8 @@ type Filter = (typeof FILTERS)[number];
 const ProjectsPage = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const { t, language } = useLanguage();
+  const pt = t.project;
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -52,7 +55,7 @@ const ProjectsPage = () => {
         {/* ── Header ── */}
         <div className="mb-10">
           <p className="text-accent text-[10px] font-mono tracking-[0.22em] uppercase mb-2">
-            What I've Shipped
+            {pt.eyebrow}
           </p>
           <h1 className="h1" style={{ color: "var(--text)" }}>
             Builds.<span className="text-accent">.</span>
@@ -90,7 +93,7 @@ const ProjectsPage = () => {
         {filtered.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <p className="font-mono text-sm" style={{ color: "var(--text-muted)" }}>
-              ∅ no projects
+              {pt.noProjects}
             </p>
           </div>
         ) : (
@@ -186,7 +189,7 @@ const ProjectsPage = () => {
 
                 {/* Overview */}
                 <p className="font-mono text-[14px] leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>
-                  {project.overview}
+                  {project.overview[language]}
                 </p>
 
                 {/* Tech pills */}
@@ -207,9 +210,9 @@ const ProjectsPage = () => {
 
                 {/* Detail rows */}
                 {[
-                  { label: "Architecture", val: project.architecture },
-                  { label: "Infrastructure", val: project.infrastructure },
-                  { label: "Challenges", val: project.challenges },
+                  { label: pt.architecture,   val: project.architecture[language] },
+                  { label: pt.infrastructure, val: project.infrastructure },
+                  { label: pt.challenges,     val: project.challenges[language] },
                 ].map((row) => (
                   <div
                     key={row.label}
@@ -234,7 +237,7 @@ const ProjectsPage = () => {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 font-mono text-[12px] tracking-wide px-5 py-3 rounded-lg border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
                     >
-                      <Globe /> Live Site ↗
+                      <Globe /> {pt.liveSite}
                     </a>
                   )}
                   {project.githubUrl && (
@@ -262,7 +265,7 @@ const ProjectsPage = () => {
                         color: "var(--text-muted)",
                       }}
                     >
-                      <Video size={14} /> Demo
+                      <Video size={14} /> {pt.demo}
                     </a>
                   )}
                 </div>
