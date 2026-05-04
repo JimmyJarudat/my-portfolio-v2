@@ -288,7 +288,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 4, slug: "docker-portainer-setup", category: "infrastructure",
+        id: 4, slug: "docker-portainer-setup", category: "docker-swarm",
         title: "ติดตั้ง Docker + Portainer + Docker Swarm",
         description: "ติดตั้ง Docker Engine, ติดตั้ง Portainer สำหรับจัดการ container ผ่าน UI, เปิด Swarm mode และสร้าง overlay network main_public สำหรับ deploy service ที่ต้องการให้อยู่ network เดียวกัน",
         difficulty: "beginner", time: "30 min",
@@ -548,7 +548,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 7, slug: "nginx-proxy-manager-setup", category: "infrastructure",
+        id: 7, slug: "nginx-proxy-manager-setup", category: "docker-swarm",
         title: "ติดตั้ง Nginx Proxy Manager ใน Docker Swarm",
         description: "Deploy Nginx Proxy Manager ใน Swarm ผ่าน Portainer UI, ตั้งค่า DNS ใน Cloudflare และออก wildcard SSL cert อัตโนมัติด้วย Let's Encrypt + Cloudflare DNS challenge",
         difficulty: "intermediate", time: "30 min",
@@ -651,7 +651,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 8, slug: "deploy-database-stacks", category: "infrastructure",
+        id: 8, slug: "deploy-database-stacks", category: "docker-swarm",
         title: "Deploy Database Stacks ใน Docker Swarm",
         description: "Deploy MariaDB, PostgreSQL, MongoDB และ Redis ใน Swarm ผ่าน Portainer โดยใช้ Docker Secret เก็บ password — ทุก service อยู่ใน network main_public เดียวกัน พร้อมใช้งานกับ service อื่นได้ทันที",
         difficulty: "intermediate", time: "40 min",
@@ -732,7 +732,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 9, slug: "deploy-n8n", category: "infrastructure",
+        id: 9, slug: "deploy-n8n", category: "docker-swarm",
         title: "Deploy n8n ใน Docker Swarm",
         description: "Deploy n8n workflow automation ใน Swarm ผ่าน Portainer โดยใช้ PostgreSQL เป็น database และเชื่อม domain ผ่าน NPM สำหรับ webhook",
         difficulty: "intermediate", time: "30 min",
@@ -804,7 +804,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 10, slug: "deploy-nextcloud-nfs", category: "infrastructure",
+        id: 10, slug: "deploy-nextcloud-nfs", category: "docker-swarm",
         title: "Deploy Nextcloud + NFS NAS",
         description: "Deploy Nextcloud ใน Swarm ผ่าน Portainer โดยใช้ PostgreSQL เป็น database และ mount NFS จาก NAS สำหรับเก็บไฟล์ — config และ metadata เก็บใน database, ไฟล์จริงเก็บบน NAS",
         difficulty: "intermediate", time: "40 min",
@@ -885,7 +885,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 11, slug: "deploy-gitlab", category: "infrastructure",
+        id: 11, slug: "deploy-gitlab", category: "docker-swarm",
         title: "Deploy GitLab ใน Docker Swarm",
         description: "Deploy GitLab CE ใน Swarm ผ่าน Portainer สำหรับ self-hosted Git repository — เชื่อม domain ผ่าน NPM และตั้งค่า email notification",
         difficulty: "intermediate", time: "40 min",
@@ -973,7 +973,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 12, slug: "deploy-librenms", category: "infrastructure",
+        id: 12, slug: "deploy-librenms", category: "observability",
         title: "Deploy LibreNMS ใน Docker Swarm",
         description: "Deploy LibreNMS network monitoring ใน Swarm ผ่าน Portainer โดยใช้ MariaDB เป็น database และ Redis สำหรับ cache — monitor อุปกรณ์ network ทั้งหมดผ่าน SNMP",
         difficulty: "intermediate", time: "45 min",
@@ -1061,7 +1061,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 15, slug: "grafana-prometheus-monitoring", category: "infrastructure",
+        id: 15, slug: "grafana-prometheus-monitoring", category: "observability",
         title: "Deploy Grafana + Prometheus ใน Docker Swarm",
         description: "Deploy Prometheus สำหรับเก็บ metric และ Grafana สำหรับ visualize — monitor ทั้ง server resource และ container ผ่าน Node Exporter และ cAdvisor เชื่อม domain ผ่าน NPM",
         difficulty: "intermediate", time: "45 min",
@@ -1245,7 +1245,7 @@ alias sstatus='sudo systemctl status'`,
 
 
     {
-        id: 14, slug: "github-actions-docker-ci-cd", category: "infrastructure",
+        id: 14, slug: "github-actions-docker-ci-cd", category: "docker-swarm",
         title: "GitHub Actions — Build Docker Image + Auto Merge + Telegram Notify",
         description: "ตั้งค่า GitHub Actions สองรูปแบบ: (1) push main → build → push Docker Hub และ (2) dev → auto merge main → build → notify Telegram — พร้อม Dockerfile สำหรับ NestJS, Vite และ Elysia (Bun)",
         difficulty: "intermediate", time: "40 min",
@@ -2893,7 +2893,7 @@ alias sstatus='sudo systemctl status'`,
     },
 
     {
-        id: 33, slug: "windows-event-viewer-audit-log", category: "infrastructure",
+        id: 33, slug: "windows-event-viewer-audit-log", category: "observability",
         title: "Windows Event Viewer + Audit Log — ติดตามใคร Login ใครลบไฟล์",
         description: "อ่าน Event Viewer ให้เป็น เปิด Audit Policy เพื่อบันทึก login/logout และการแก้ไขไฟล์ รู้จัก Event ID ที่สำคัญ และใช้ PowerShell query log ได้เร็วกว่าเปิด GUI",
         difficulty: "intermediate", time: "30 min",
@@ -3045,7 +3045,7 @@ alias sstatus='sudo systemctl status'`,
         ],
     },
     {
-        id: 36, slug: "sql-server-slow-query-missing-index", category: "infrastructure",
+        id: 36, slug: "sql-server-slow-query-missing-index", category: "observability",
         title: "SQL Server ช้า — หา Slow Query + Missing Index",
         description: "วิธีหาต้นเหตุที่ SQL Server ช้าอย่างมีระบบ: ดู active query ที่กิน resource, หา slow query ด้วย Query Store และ DMV, อ่าน Execution Plan และ apply missing index suggestion",
         difficulty: "intermediate", time: "40 min",
