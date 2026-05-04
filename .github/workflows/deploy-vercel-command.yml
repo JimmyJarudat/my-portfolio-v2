@@ -39,16 +39,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git fetch origin main
           git checkout main
-          git merge origin/dev --squash -X theirs
-          if git diff --cached --quiet; then
+          BEFORE=$(git rev-parse HEAD)
+          CLEAN_MSG=$(echo "${COMMIT_MSG}" | sed 's/deploy vercel//gi' | xargs)
+          git merge origin/dev --no-ff -X theirs -m "chore: deploy — ${CLEAN_MSG}"
+          AFTER=$(git rev-parse HEAD)
+          if [ "$BEFORE" = "$AFTER" ]; then
             echo "nothing to merge"
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            exit 0
+          else
+            git push origin main
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-          CLEAN_MSG=$(echo "${COMMIT_MSG}" | sed 's/deploy vercel//gi' | xargs)
-          git commit -m "chore: deploy — ${CLEAN_MSG}"
-          git push origin main
-          echo "has_changes=true" >> $GITHUB_OUTPUT
 
       - name: Recreate dev from main
         if: steps.merge.outputs.has_changes == 'true'
