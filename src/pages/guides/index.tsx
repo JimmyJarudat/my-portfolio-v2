@@ -1,5 +1,5 @@
 // pages/GuidesPage.tsx
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { GUIDES } from "../../data/guide.data";
 import { Pagination } from "@/components/Pagination";
 
@@ -410,7 +410,6 @@ const SearchInput = ({
     value: string;
     onChange: (v: string) => void;
 }) => {
-    const border = "rgba(255,255,255,0.07)";
     return (
         <div className="relative">
             <span
@@ -696,22 +695,6 @@ const GuidesPage = () => {
                     border={border}
                 />
 
-                {filtered.length > 0 && (
-                    <div
-                        className="mt-8 p-6 rounded-2xl border text-center"
-                        style={{ borderColor: border, borderStyle: "dashed" }}
-                    >
-                        <p
-                            className="font-mono text-[10px] tracking-widest uppercase mb-2"
-                            style={{ color: "var(--accent)", opacity: 0.6 }}
-                        >
-                            ✦ more coming soon
-                        </p>
-                        <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>
-                            กำลังเขียนเพิ่ม — Nginx Proxy Manager, SQL Server backup, Telegram bot
-                        </p>
-                    </div>
-                )}
             </div>
         </div>
     );
