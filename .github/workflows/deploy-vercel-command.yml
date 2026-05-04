@@ -106,14 +106,21 @@ jobs:
               sha,
             });
 
-      - name: Delete dev branch
+      - name: Recreate dev branch from main
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.git.deleteRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'heads/dev',
+            const { owner, repo } = context.repo;
+
+            await github.rest.git.deleteRef({ owner, repo, ref: 'heads/dev' });
+
+            const { data: main } = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+
+            await github.rest.git.createRef({
+              owner,
+              repo,
+              ref: 'refs/heads/dev',
+              sha: main.commit.sha,
             });
 
       - name: Comment success
