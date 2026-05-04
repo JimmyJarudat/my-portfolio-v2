@@ -41,7 +41,7 @@ jobs:
           git checkout main
           BEFORE=$(git rev-parse HEAD)
           CLEAN_MSG=$(echo "${COMMIT_MSG}" | sed 's/deploy vercel//gi' | xargs)
-          git merge origin/dev --no-ff -m "chore: deploy — ${CLEAN_MSG}"
+          git merge origin/dev --no-ff -X theirs -m "chore: deploy — ${CLEAN_MSG}"
           AFTER=$(git rev-parse HEAD)
           if [ "$BEFORE" = "$AFTER" ]; then
             echo "nothing to merge"
