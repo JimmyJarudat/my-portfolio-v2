@@ -39,7 +39,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git fetch origin main
           git checkout main
-          git merge origin/dev --squash
+          git merge origin/dev --squash -X theirs
           if git diff --cached --quiet; then
             echo "nothing to merge"
             echo "has_changes=false" >> $GITHUB_OUTPUT
