@@ -57,7 +57,7 @@ const Header = () => {
   return (
     <header className={`
       fixed top-0 left-0 right-0 z-30 text-white transition-all duration-300
-      ${scrolled
+      ${scrolled || open
         ? "py-4 bg-primary/90 backdrop-blur-md shadow-lg shadow-black/20"
         : "py-8 xl:py-12 bg-transparent"}
     `}>
@@ -118,18 +118,17 @@ const Header = () => {
           {open && (
             <>
               <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setOpen(false)} />
-              <div className="fixed top-0 right-0 h-full w-[75vw] max-w-sm bg-primary z-50 flex flex-col p-6 shadow-xl">
-                <button onClick={() => setOpen(false)} className="self-end text-2xl text-white hover:text-accent mb-4">
+              <div className="fixed top-0 right-0 h-screen w-[75vw] max-w-sm bg-primary z-50 flex flex-col p-6 shadow-xl">
+                <button onClick={() => setOpen(false)} className="self-end text-2xl text-white hover:text-accent">
                   ✕
                 </button>
-                <div className="mt-32 mb-40 text-center">
+                <div className="flex-1 flex flex-col items-center justify-start gap-8 overflow-y-auto pt-6 pb-6">
                   <Link to="/" onClick={() => setOpen(false)}>
-                    <h1 className="text-4xl font-semibold">
+                    <h1 className="text-4xl font-semibold mb-4">
                       Jimmy<span className="text-accent">.</span>
                     </h1>
                   </Link>
-                </div>
-                <nav className="flex flex-col justify-center items-center gap-8">
+
                   {NAV_KEYS.map((key) => (
                     <Link
                       key={key}
@@ -142,18 +141,17 @@ const Header = () => {
                   ))}
 
                   <Link to="/guides" onClick={() => setOpen(false)}>
-                    <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold border-2 border-accent text-accent hover:bg-accent hover:text-primary transition-all duration-300 mt-2">
+                    <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold border-2 border-accent text-accent hover:bg-accent hover:text-primary transition-all duration-300">
                       {t.navbar.guides} ✦
                     </button>
                   </Link>
 
-                  {/* Blog Link in Mobile Menu */}
                   <Link to="/tech-notes" onClick={() => setOpen(false)}>
-                    <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors mt-4">
+                    <button className="inline-flex items-center justify-center h-[44px] px-8 rounded-full font-semibold bg-accent text-primary hover:bg-accent-hover transition-colors">
                       {t.navbar.blog}
                     </button>
                   </Link>
-                </nav>
+                </div>
               </div>
             </>
           )}

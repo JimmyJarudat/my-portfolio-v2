@@ -5,6 +5,8 @@ const SESSION_KEY = 'pv_tracked'
 
 // ─── Record a page view (once per session per path) ───────────────────────────
 export async function trackPageView(path: string): Promise<void> {
+  if (window.location.hostname === 'localhost') return
+
   const key = `${SESSION_KEY}:${path}`
   if (sessionStorage.getItem(key)) return   // already tracked this session
 
