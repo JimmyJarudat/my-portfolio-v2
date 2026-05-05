@@ -60,7 +60,7 @@ const ResumePage = () => {
 
           {/* Download button */}
           <a
-            href="/pdf/Resume.pdf"
+            href="/pdf/CV.pdf"
             download="Resume-JimmyJarudat.pdf"
             className="inline-flex items-center gap-2 font-mono text-[12px] tracking-wide px-5 py-3 rounded-lg border border-accent/40 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
           >

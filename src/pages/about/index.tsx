@@ -76,6 +76,15 @@ const AboutPage = () => {
                         <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
                             {a.bio3}
                         </p>
+                        <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
+                            {a.bio4}
+                        </p>
+                        <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
+                            {a.bio5}
+                        </p>
+                        <p className="font-mono text-[13px] leading-[1.9] mb-10" style={{ color: "var(--text-muted)" }}>
+                            {a.bio6}
+                        </p>
 
                         {/* Divider */}
                         <div className="h-px bg-black/[0.08] dark:bg-white/[0.07] mb-8" />
